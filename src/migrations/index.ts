@@ -3,6 +3,7 @@ import * as migration_20260930_105100_frontend_branding from './20260930_105100_
 import * as migration_20261001_012115_yohaku_import from './20261001_012115_yohaku_import';
 import * as migration_20261001_030741_decouple_dead_data from './20261001_030741_decouple_dead_data';
 import * as migration_20261001_034348_add_site_start_date from './20261001_034348_add_site_start_date';
+import * as migration_20261001_121205_add_user_avatar from './20261001_121205_add_user_avatar';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20261001_034348_add_site_start_date.up,
     down: migration_20261001_034348_add_site_start_date.down,
-    name: '20261001_034348_add_site_start_date'
+    name: '20261001_034348_add_site_start_date',
+  },
+  {
+    up: migration_20261001_121205_add_user_avatar.up,
+    down: migration_20261001_121205_add_user_avatar.down,
+    name: '20261001_121205_add_user_avatar'
   },
 ];

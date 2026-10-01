@@ -4,7 +4,7 @@ import { activeUser, adminField, adminOnly, isAdmin } from '@/access/roles'
 export const Users: CollectionConfig = {
   slug: 'users',
   labels: { singular: '账号', plural: '账号' },
-  admin: { useAsTitle: 'name', defaultColumns: ['name', 'email', 'role', 'active'] },
+  admin: { useAsTitle: 'name', defaultColumns: ['name', 'email', 'avatar', 'role', 'active'] },
   access: {
     admin: ({ req }) => activeUser(req.user),
     create: adminOnly,
@@ -23,7 +23,7 @@ export const Users: CollectionConfig = {
       },
     ],
     beforeChange: [
-      ({ data, originalDoc, req }) => {
+      async ({ data, originalDoc, req }) => {
         if (!originalDoc && !isAdmin(req.user) && !req.context.bootstrap)
           throw new Error('账号必须由管理员创建或通过受控脚本初始化')
         if (
@@ -33,12 +33,36 @@ export const Users: CollectionConfig = {
         ) {
           throw new Error('不能停用或降级当前管理员账号')
         }
+        if (!data.avatar && !originalDoc?.avatar) {
+          try {
+            const presets = await req.payload.find({
+              collection: 'media',
+              where: {
+                'importSource.batch': { equals: 'preset-avatars' },
+              },
+              limit: 10,
+              depth: 0,
+            })
+            if (presets.docs.length > 0) {
+              const chosen = presets.docs[Math.floor(Math.random() * presets.docs.length)]
+              data.avatar = chosen.id
+            }
+          } catch {
+            // fallback gracefully
+          }
+        }
         return data
       },
     ],
   },
   fields: [
     { name: 'name', type: 'text', required: true },
+    {
+      name: 'avatar',
+      type: 'upload',
+      relationTo: 'media',
+      label: '用户头像',
+    },
     {
       name: 'role',
       type: 'select',
