@@ -1,0 +1,1422 @@
+@import './shiro-markdown.css';
+/* Values from captured Yohaku CSS; named selectors map the captured DOM to Payload. */
+.capture-rise {
+  animation: capture-rise 600ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.capture-fade {
+  animation: capture-fade 600ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+@keyframes capture-rise {
+  from {
+    opacity: 0.001;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes capture-fade {
+  from {
+    opacity: 0.001;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.yohaku-source-credit {
+  margin-top: 3rem;
+  color: var(--color-neutral-6);
+  font-size: 12px;
+}
+.yohaku-source-credit a {
+  color: var(--color-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .capture-rise,
+  .capture-fade {
+    animation: none;
+  }
+}
+@font-face {
+  font-family: Instrument Sans;
+  src: url('/fonts/instrument-sans-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root:root {
+  --app-font-sans: 'Instrument Sans';
+  --color-root-bg: #fefefb;
+  --surface-paper: var(--color-root-bg);
+  --color-accent: #c56473;
+  --accent: #c56473;
+  --background: #fefefb;
+  --foreground: #24231f;
+  --border: #18181b1a;
+  --color-base-content: #24231f;
+  --color-base-100: #fefefb;
+  --color-border: #18181b1a;
+  --font-sans: 'Instrument Sans', 'MiSans', system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+}
+:root:root[data-theme='dark'] {
+  --color-root-bg: #1c1c1e;
+  --background: #1c1c1e;
+  --foreground: #e8e8e8;
+  --color-base-content: #e8e8e8;
+  --color-base-100: #1c1c1e;
+  --color-border: #ffffff1a;
+  --border: #ffffff1a;
+  --color-neutral-1: #202020;
+  --color-neutral-2: #292929;
+  --color-neutral-3: #383838;
+  --color-neutral-4: #525252;
+  --color-neutral-5: #737373;
+  --color-neutral-6: #a3a3a3;
+  --color-neutral-7: #b5b5b5;
+  --color-neutral-8: #d4d4d4;
+  --color-neutral-9: #ededed;
+  --color-neutral-10: #fafafa;
+  --color-accent: #d9909c;
+  --accent: #d9909c;
+}
+html {
+  font-size: 14px;
+  background: var(--color-root-bg);
+  scroll-behavior: smooth;
+}
+body {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+}
+button,
+a,
+input {
+  touch-action: manipulation;
+}
+button {
+  cursor: pointer;
+}
+a,
+button,
+input {
+  outline-offset: 4px;
+}
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+}
+.yohaku-main {
+  min-width: 0;
+  padding: 0 16px;
+}
+.yohaku-home {
+  padding-bottom: 100px;
+}
+.yohaku-page {
+  max-width: 1024px;
+  margin: 56px auto 100px;
+  padding: 0 8px;
+}
+.yohaku-page-heading h1 {
+  font-size: 28px;
+  font-weight: 400;
+  margin-top: 10px;
+}
+.yohaku-eyebrow {
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--color-neutral-6);
+}
+.yohaku-post-count {
+  font-size: 12px;
+  color: var(--color-neutral-6);
+  margin: 20px 0 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.yohaku-post-item {
+  padding: 14px 16px;
+  margin: 4px -16px;
+  border-radius: 8px;
+  opacity: 0;
+  animation: yohaku-fade-up 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transition:
+    background 0.25s,
+    transform 0.25s,
+    box-shadow 0.25s;
+}
+.yohaku-home-enter,
+.yohaku-section-enter,
+.yohaku-timeline-enter {
+  opacity: 0;
+  animation: yohaku-fade-up 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.yohaku-section-enter {
+  animation-delay: 180ms;
+}
+.yohaku-search-fab {
+  display: flex;
+}
+.yohaku-post-item:hover {
+  background: color-mix(in srgb, var(--background) 70%, transparent);
+  box-shadow:
+    0 2px 12px #0000000a,
+    0 0 0 1px var(--border);
+  transform: translateY(-1px);
+}
+.yohaku-pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 36px;
+  font-size: 12px;
+  color: var(--color-neutral-6);
+}
+.yohaku-empty {
+  padding: 48px 0;
+  color: var(--color-neutral-6);
+}
+.yohaku-archive-grid {
+  display: grid;
+  gap: 40px;
+}
+.yohaku-archive-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-neutral-6);
+}
+.yohaku-archive-sidebar nav h2 {
+  margin: 24px 0 4px;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.yohaku-archive-sidebar [aria-current] {
+  color: var(--color-accent);
+}
+.yohaku-search-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+.yohaku-search-form input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.yohaku-search-form button {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--color-accent);
+}
+.yohaku-category-list {
+  margin-top: 28px;
+}
+.yohaku-category-list li {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+.yohaku-footer {
+  padding: 32px 0 48px;
+  background: color-mix(in oklab, var(--color-accent) 5%, var(--color-root-bg));
+}
+.yohaku-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  font-size: 13px;
+  color: var(--color-neutral-6);
+}
+.yohaku-theme-links {
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.yohaku-theme-links [aria-pressed='true'] {
+  color: var(--color-neutral-9);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.yohaku-reading-page {
+  max-width: 760px;
+}
+.yohaku-reading-heading,
+.yohaku-article-heading {
+  margin-bottom: 32px;
+}
+.yohaku-reading-heading h1,
+.yohaku-article-heading h1 {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 45px;
+  text-align: center;
+  text-wrap: balance;
+  margin-bottom: 10.5px;
+}
+.yohaku-reading-heading p {
+  text-align: center;
+  color: var(--color-neutral-6);
+  font-size: 13px;
+}
+.yohaku-article-page {
+  max-width: 1152px;
+  margin: 120px auto 100px;
+}
+.yohaku-article-grid {
+  position: relative;
+}
+.yohaku-article-main {
+  max-width: 952px;
+  margin: auto;
+  min-width: 0;
+}
+.yohaku-article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-neutral-6);
+}
+.yohaku-article-kicker {
+  display: block;
+  margin-bottom: 24px;
+  font-size: 12px;
+  color: var(--color-neutral-6);
+}
+.yohaku-article-body {
+  font-size: 16px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.yohaku-article-body .prose {
+  font-size: inherit;
+  max-width: none;
+  color: inherit;
+}
+.yohaku-article-body :is(h1, h2, h3, h4) {
+  scroll-margin-top: 100px;
+  color: var(--foreground);
+}
+.yohaku-article-body img {
+  max-width: 100%;
+  height: auto;
+}
+.yohaku-article-body table {
+  display: block;
+  overflow: auto;
+}
+.yohaku-related-posts {
+  margin-top: 64px;
+}
+.yohaku-about-socials {
+  display: flex;
+  gap: 20px;
+  margin-top: 32px;
+}
+.yohaku-read-indicator {
+  position: fixed;
+  inset: 0 1px 0 auto;
+  z-index: 99;
+  width: 1px;
+}
+.yohaku-read-indicator span {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  background: color-mix(in srgb, var(--color-accent) 80%, transparent);
+  transition: height 75ms linear;
+}
+.yohaku-toc-desktop {
+  position: sticky;
+  top: 120px;
+  margin-top: 120px;
+  align-self: start;
+  padding-left: 35px;
+  display: none;
+  width: 200px;
+  max-height: calc(100vh - 240px);
+  font-size: 14px;
+}
+.yohaku-toc-tree {
+  max-height: 60vh;
+  overflow: auto;
+  scrollbar-width: none;
+}
+.yohaku-toc-tree::-webkit-scrollbar {
+  display: none;
+}
+.yohaku-toc-tree li {
+  position: relative;
+  line-height: 1;
+  transition:
+    opacity 350ms cubic-bezier(0.4, 0, 0.2, 1),
+    translate 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: var(--toc-ripple-delay);
+}
+.yohaku-toc-tree a {
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 1.5px;
+  overflow: hidden;
+  color: var(--color-neutral-8);
+  line-height: 1.5;
+  opacity: 0.35;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition:
+    opacity 300ms ease-in-out,
+    color 300ms ease-in-out,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yohaku-toc-tree a:hover {
+  opacity: 0.8;
+}
+.yohaku-toc-tree a[aria-current='location'] {
+  color: var(--color-accent);
+  opacity: 1;
+  transform: translateX(4px);
+}
+.yohaku-toc-progress {
+  display: flex;
+  gap: 10px;
+  margin: 8px 8px 0;
+  color: var(--color-neutral-6);
+}
+.yohaku-toc-wave {
+  display: block;
+  width: 150px;
+  max-width: 100%;
+  height: 10px;
+  margin: 16px 8px 0;
+  color: color-mix(in srgb, var(--color-neutral-10) 12%, transparent);
+}
+.yohaku-toc-progress button {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms;
+}
+.yohaku-toc-progress button[data-visible] {
+  opacity: 0.7;
+  pointer-events: auto;
+}
+.yohaku-toc-fab {
+  position: fixed;
+  right: max(0px, env(safe-area-inset-right));
+  bottom: calc(5rem + env(safe-area-inset-bottom));
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  overflow-x: clip;
+}
+.yohaku-toc-fab button {
+  position: relative;
+  display: flex;
+  width: 3rem;
+  height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  padding-right: 4px;
+  overflow: hidden;
+  color: var(--color-neutral-6);
+  background: color-mix(in srgb, var(--surface-paper) 95%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-neutral-9) 8%, transparent);
+  border-right: 0;
+  border-radius: 1rem 0 0 1rem;
+  transition:
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yohaku-toc-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+}
+.yohaku-toc-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-neutral-9) 25%, transparent);
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yohaku-toc-sheet {
+  position: fixed;
+  inset: auto 0 0.5rem;
+  display: flex;
+  max-height: calc(100svh - 5rem);
+  flex-direction: column;
+  padding: 0 0.875rem 0.875rem;
+  animation: yohaku-sheet-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.yohaku-toc-dialog[data-closing] .yohaku-toc-sheet {
+  animation: yohaku-sheet-exit 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+.yohaku-toc-dialog[data-closing]::backdrop {
+  opacity: 0;
+}
+@keyframes yohaku-sheet-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0.98;
+    transform: translateY(calc(100% + 1rem));
+  }
+}
+.yohaku-toc-sheet-card {
+  display: flex;
+  max-height: calc(100svh - 5rem);
+  flex-direction: column;
+  overflow: hidden;
+  background: #fefefb;
+  border: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 4%),
+    0 4px 14px rgb(0 0 0 / 6%);
+}
+[data-theme='dark'] .yohaku-toc-sheet-card {
+  background: var(--color-neutral-2);
+  border-color: rgb(255 255 255 / 4%);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 15%),
+    0 4px 12px rgb(0 0 0 / 10%);
+}
+.yohaku-toc-sheet-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+}
+.yohaku-toc-sheet-card h2 {
+  min-width: 0;
+  padding-right: 32px;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.yohaku-toc-sheet-card header button {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-5);
+}
+.yohaku-toc-sheet-scroll {
+  min-height: 0;
+  padding: 16px 20px 20px;
+  overflow: auto;
+}
+.yohaku-toc-sheet .yohaku-toc-tree {
+  max-height: 100%;
+  padding: 0 8px;
+}
+.yohaku-toc-sheet .yohaku-toc-tree li {
+  padding: 4px 0;
+}
+.yohaku-header-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  background: rgb(0 0 0 / 4%);
+  animation: yohaku-backdrop-in 200ms ease-out both;
+}
+.yohaku-header {
+  position: fixed;
+  right: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: 14px;
+  z-index: 9;
+  height: 0;
+  pointer-events: none;
+}
+.yohaku-header-paper {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 78%;
+  overflow: hidden;
+  pointer-events: auto;
+  background: #fefefb;
+  border: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 22px;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 4%),
+    0 4px 14px rgb(0 0 0 / 6%);
+  transform: translateX(-50%);
+  transition:
+    width 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    left 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-theme='dark'] .yohaku-header-paper {
+  background: var(--color-neutral-2);
+  border-color: rgb(255 255 255 / 4%);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 15%),
+    0 4px 12px rgb(0 0 0 / 10%);
+}
+.yohaku-header[data-open] .yohaku-header-paper {
+  width: 100%;
+  border-radius: 20px;
+}
+.yohaku-header-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease 0ms;
+}
+.yohaku-header[data-open] .yohaku-header-content {
+  max-height: min(75svh, 520px);
+  opacity: 1;
+  transition:
+    max-height 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease 150ms;
+}
+.yohaku-header-scroll {
+  max-height: 75svh;
+  padding: 24px 20px 20px;
+  overflow-y: auto;
+}
+.yohaku-header-divider {
+  height: 1px;
+  margin: 0 16px;
+  background: color-mix(in srgb, var(--color-neutral-9) 5%, transparent);
+  opacity: 0;
+  transition: opacity 300ms ease 200ms;
+}
+.yohaku-header[data-open] .yohaku-header-divider {
+  opacity: 1;
+}
+.yohaku-header-bar {
+  display: flex;
+  height: 44px;
+  align-items: center;
+}
+.yohaku-header-brand {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  padding-left: 16px;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  color: var(--color-neutral-8);
+}
+.yohaku-header-brand img {
+  border-radius: 50%;
+}
+.yohaku-header-toggle {
+  display: flex;
+  width: 48px;
+  height: 100%;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-5);
+}
+.yohaku-menu-line {
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms;
+}
+.yohaku-menu-line-top[data-open] {
+  transform: translateY(6px) rotate(45deg);
+}
+.yohaku-menu-line-mid[data-open] {
+  opacity: 0;
+}
+.yohaku-menu-line-bottom[data-open] {
+  transform: translateY(-6px) rotate(-45deg);
+}
+.yohaku-menu-nav {
+  display: flex;
+  flex-direction: column;
+}
+.yohaku-menu-nav a {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-neutral-9) 5%, transparent);
+  color: var(--color-neutral-8);
+  font-family: var(--font-serif);
+  font-size: 14px;
+}
+.yohaku-menu-nav a[aria-current] {
+  color: var(--color-neutral-9);
+  font-weight: 500;
+}
+.yohaku-menu-nav i {
+  min-width: 44px;
+  margin-left: auto;
+  color: var(--color-neutral-6);
+  font-family: var(--font-sans);
+  font-style: normal;
+  text-align: right;
+}
+.yohaku-menu-more {
+  margin-top: 16px;
+}
+.yohaku-menu-more > span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-neutral-5);
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.yohaku-menu-more > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+.yohaku-menu-more a {
+  padding: 6px 0;
+  color: var(--color-neutral-7);
+  font-size: 13px;
+}
+.yohaku-menu-theme {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--color-neutral-9) 6%, transparent);
+  font-size: 12px;
+}
+@keyframes yohaku-sheet-enter {
+  from {
+    opacity: 0.98;
+    transform: translateY(calc(100% + 1rem));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes yohaku-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes yohaku-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (min-width: 1024px) {
+  .yohaku-main {
+    padding: 63px 0 0;
+  }
+  .yohaku-page {
+    margin-top: 80px;
+    padding: 0;
+  }
+  .yohaku-archive-grid {
+    grid-template-columns: minmax(0, 1fr) 238px;
+  }
+  .yohaku-archive-sidebar {
+    position: sticky;
+    top: 100px;
+    align-self: start;
+  }
+  .yohaku-toc-desktop {
+    display: block;
+  }
+  .yohaku-toc-fab {
+    display: none;
+  }
+  .yohaku-header {
+    inset: 0 0 auto;
+    height: 72px;
+  }
+  .yohaku-header-paper,
+  .yohaku-header[data-open] .yohaku-header-paper {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    max-width: 1280px;
+    height: 72px;
+    margin: 0 auto;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+  }
+  [data-theme='dark'] .yohaku-header-paper {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+  .yohaku-header-bar {
+    display: grid;
+    width: 100%;
+    height: 72px;
+    grid-template-columns: 72px 1fr 72px;
+    padding: 0 32px;
+  }
+  .yohaku-header-brand {
+    grid-column: 1;
+    padding: 0;
+    justify-content: center;
+  }
+  .yohaku-header-brand span {
+    display: none;
+  }
+  .yohaku-header-toggle {
+    width: 72px;
+    grid-column: 3;
+  }
+  .yohaku-header-divider {
+    display: none;
+  }
+  .yohaku-header-content {
+    position: fixed;
+    top: 64px;
+    right: max(32px, calc((100vw - 1216px) / 2));
+    width: 360px;
+    max-height: 0;
+    color: var(--foreground);
+    background: var(--surface-paper);
+    border: 1px solid transparent;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgb(0 0 0 / 0%);
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top right;
+    transition:
+      max-height 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 200ms,
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 200ms,
+      box-shadow 200ms;
+  }
+  .yohaku-header[data-open] .yohaku-header-content {
+    max-height: min(75vh, 560px);
+    border-color: var(--border);
+    box-shadow: 0 12px 38px rgb(0 0 0 / 10%);
+    transform: translateY(0) scale(1);
+  }
+  .yohaku-article-page {
+    padding-inline: 0;
+  }
+  .yohaku-article-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 200px;
+  }
+  .yohaku-article-main {
+    margin: 0;
+    max-width: 952px;
+    padding-inline: 16px;
+  }
+}
+@media (min-width: 1400px) {
+  .yohaku-article-main {
+    margin-left: 0;
+    max-width: 952px;
+  }
+}
+@media (max-width: 1023px) {
+  .yohaku-archive-sidebar {
+    display: none;
+  }
+  .yohaku-archive-sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .yohaku-archive-sidebar nav h2 {
+    margin: 0;
+  }
+  .yohaku-archive-sidebar .yohaku-search-form {
+    margin-top: 0;
+  }
+  .yohaku-article-page {
+    margin: 90px auto 70px;
+  }
+  .yohaku-reading-heading h1,
+  .yohaku-article-heading h1 {
+    font-size: 28px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media print {
+  [data-hide-print] {
+    display: none !important;
+  }
+}
+
+/* Retained Payload code and image viewer interoperability. */
+.image-dialog {
+  max-width: 95vw;
+  max-height: 92vh;
+  margin: auto;
+  padding: 20px;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.image-dialog::backdrop {
+  background: #000b;
+  backdrop-filter: blur(4px);
+}
+.image-dialog img {
+  max-height: 75vh;
+  max-width: 85vw;
+  object-fit: contain;
+}
+.image-dialog button {
+  margin-left: auto;
+  margin-bottom: 10px;
+}
+.image-dialog p {
+  font-size: 12px;
+  margin-top: 12px;
+}
+.code-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 25px 0;
+  background: #21252a;
+  color: #e2e6ed;
+}
+.code-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #ffffff15;
+  font-size: 11px;
+  color: #bac3cd;
+}
+.code-toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.code-toolbar button:hover {
+  background: #ffffff15;
+}
+.code-panel pre {
+  padding: 18px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.85;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+.search-dialog::backdrop {
+  background: rgb(0 0 0 / 0.15);
+  backdrop-filter: blur(4px);
+}
+.search-dialog {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  margin: auto;
+  max-width: 100vw;
+}
+
+.yohaku-desktop-header {
+  display: none;
+}
+.yohaku-toc-tree li {
+  display: grid;
+  grid-template-rows: 1fr;
+  max-height: 80px;
+  transition:
+    max-height 350ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.yohaku-toc-tree li[data-collapsed] {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+@media (min-width: 1024px) {
+  .yohaku-header,
+  .yohaku-header-backdrop {
+    display: none;
+  }
+  .yohaku-desktop-header {
+    display: grid;
+    position: absolute;
+    inset: 0 0 auto;
+    max-width: 1280px;
+    height: 63px;
+    margin: auto;
+    padding: 0 28px;
+    grid-template-columns: 63px 1fr 63px;
+    align-items: center;
+    z-index: 30;
+  }
+  .yohaku-desktop-avatar {
+    width: 40px;
+    height: 40px;
+    justify-self: center;
+    border-radius: 13px;
+    overflow: hidden;
+  }
+  .yohaku-desktop-nav {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    display: flex;
+    padding: 4px 8px;
+    border: 1px solid rgba(200, 180, 160, 0.12);
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--background) 72%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+    z-index: 40;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    transition:
+      border-color 200ms ease,
+      background-color 200ms ease;
+  }
+  .yohaku-desktop-nav[data-open] {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+  .yohaku-desktop-nav a {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: color 200ms ease;
+  }
+  .yohaku-desktop-nav a[aria-current] {
+    color: var(--color-accent);
+  }
+  .yohaku-desktop-nav a:not([aria-current]) {
+    color: var(--foreground);
+  }
+  .yohaku-desktop-nav a:hover {
+    color: var(--color-accent);
+  }
+  .yohaku-desktop-nav-label {
+    position: relative;
+    z-index: 1;
+  }
+  .yohaku-active-pill {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    z-index: 0;
+    pointer-events: none;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+@media (max-width: 1023px) {
+  .yohaku-search-fab {
+    bottom: 130px;
+    right: 12px;
+  }
+}
+
+/* Search panel measured from the Chinese source dialog. */
+.yohaku-search-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 7;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-6);
+  background: var(--surface-paper);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+.search-dialog {
+  position: fixed;
+  inset: 84px 0 auto;
+  margin: 0 auto;
+  width: 680px;
+  max-width: 84vw;
+  overflow: visible;
+}
+.search-dialog::backdrop {
+  background: rgb(0 0 0 / 6%);
+  backdrop-filter: none;
+}
+.yohaku-search-panel {
+  display: flex;
+  flex-direction: column;
+  width: 680px;
+  max-width: 100%;
+  height: 520px;
+  max-height: 85vh;
+  min-height: 50px;
+  box-sizing: border-box;
+  color: var(--foreground);
+  background: var(--surface-paper);
+  border: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 12px;
+  box-shadow:
+    0 2px 12px rgb(0 0 0 / 4%),
+    0 0 0 0.5px rgb(0 0 0 / 3%);
+  animation: yohaku-search-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center top;
+}
+.yohaku-search-input-row {
+  display: flex;
+  flex-shrink: 0;
+  margin: 0 16px;
+  padding: 16px 4px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.yohaku-search-input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1.5;
+  outline: none;
+}
+.yohaku-search-close {
+  color: var(--color-neutral-5);
+  font-size: 11px;
+  padding-left: 10px;
+}
+.yohaku-search-empty {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-neutral-5);
+}
+.yohaku-search-help {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+  padding: 10px 20px;
+  color: var(--color-neutral-6);
+  font-size: 11px;
+}
+@keyframes yohaku-search-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+[data-theme='dark'] .search-dialog::backdrop {
+  background: rgb(0 0 0 / 25%);
+}
+@media (max-width: 767px) {
+  .search-dialog {
+    inset: 63px 0 auto;
+    width: 100%;
+    max-width: 100vw;
+  }
+  .yohaku-search-panel {
+    width: 100%;
+    height: 80vh;
+    max-height: 80vh;
+    border: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+}
+@media (max-width: 1023px) {
+  .yohaku-search-fab {
+    bottom: 130px;
+    right: 12px;
+  }
+}
+@media (min-width: 1024px) {
+  .yohaku-page {
+    max-width: 896px;
+  }
+  .yohaku-archive-grid {
+    grid-template-columns: minmax(0, 588px) 252px;
+    gap: 56px;
+  }
+}
+.yohaku-post-item {
+  padding: 14px 0;
+  margin: 4px 0;
+  min-height: 98px;
+}
+.yohaku-post-item:hover {
+  box-shadow: none;
+  transform: none;
+  background: color-mix(in srgb, var(--color-neutral-3) 15%, transparent);
+}
+
+.yohaku-image-preview {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  padding: 32px;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+.yohaku-image-preview[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.yohaku-image-preview::backdrop {
+  background: var(--surface-paper);
+  animation: capture-fade 380ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.yohaku-image-preview[data-closing]::backdrop {
+  animation: yohaku-zoom-out 380ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.yohaku-image-preview img {
+  max-width: calc(100vw - 64px);
+  max-height: calc(100dvh - 64px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  cursor: zoom-out;
+}
+.yohaku-image-preview button {
+  position: fixed;
+  z-index: 1;
+  top: 14px;
+  right: 18px;
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--color-neutral-6);
+}
+@keyframes yohaku-zoom-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.yohaku-reading-page {
+  margin-top: 120px;
+  max-width: 896px;
+  position: relative;
+}
+.yohaku-reading-heading {
+  margin-bottom: 80px;
+}
+.yohaku-reading-heading h1 {
+  font-weight: 700;
+}
+.yohaku-reading-page > .yohaku-toc-desktop {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .yohaku-reading-heading h1,
+  .yohaku-reading-heading p {
+    text-align: left;
+  }
+}
+.yohaku-post-item[data-pinned] {
+  margin-top: 20px;
+  margin-bottom: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface-paper) 50%, transparent);
+}
+.yohaku-post-item[data-pinned] p {
+  -webkit-line-clamp: 2;
+  margin-top: 8px;
+  line-height: 1.7;
+}
+.yohaku-archive-mobile-tools {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .yohaku-archive-mobile-tools {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .yohaku-archive-mobile-tools a {
+    flex: 1;
+    text-align: center;
+    padding: 7px;
+    background: var(--surface-paper);
+    border-radius: 6px;
+    color: var(--color-neutral-6);
+  }
+}
+.yohaku-pin-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-accent);
+  font-size: 11px;
+}
+
+.yohaku-category-page {
+  max-width: 672px;
+}
+.yohaku-category-heading .yohaku-eyebrow {
+  margin-bottom: 16px;
+  font-size: 10px;
+}
+.yohaku-category-total {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--color-neutral-6);
+  font-size: 13px;
+}
+.yohaku-category-total strong {
+  font-size: 49px;
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--color-neutral-9);
+}
+.yohaku-category-heading h1 {
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 500;
+}
+.yohaku-category-rule {
+  width: 32px;
+  height: 1px;
+  background: var(--color-accent);
+  margin: 24px 0 28px;
+}
+.yohaku-category-year h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 20px 0 8px;
+  font-size: 28px;
+  font-weight: 200;
+  color: var(--color-neutral-5);
+}
+.yohaku-category-year small {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.yohaku-category-year a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 16px;
+  margin: 0 -12px;
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+  transition:
+    background 300ms ease-out,
+    color 200ms;
+}
+.yohaku-category-year a:hover {
+  color: var(--color-accent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--color-accent) 6%, transparent),
+    transparent
+  );
+}
+.yohaku-category-year a > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.yohaku-category-year time {
+  font-size: 12px;
+  color: var(--color-neutral-5);
+  white-space: nowrap;
+}
+@media (min-width: 1536px) {
+  .yohaku-category-page {
+    max-width: 784px;
+  }
+}

@@ -1,0 +1,14 @@
+/* Innei/Shiro 891bb24: components/layout/header/internal/grid.css (AGPL-3.0) */
+.header--grid {
+  grid-template-areas: 'left center right';
+}
+
+.header--grid__logo {
+  grid-area: center;
+}
+
+@media (width >= 1024px) {
+  .header--grid__logo {
+    grid-area: left;
+  }
+}
