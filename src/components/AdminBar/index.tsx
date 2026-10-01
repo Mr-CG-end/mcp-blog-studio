@@ -16,20 +16,24 @@ const baseClass = 'admin-bar'
 
 const collectionLabels = {
   pages: {
-    plural: 'Pages',
-    singular: 'Page',
+    plural: '页面',
+    singular: '页面',
   },
   posts: {
-    plural: 'Posts',
-    singular: 'Post',
+    plural: '文章',
+    singular: '文章',
   },
-  projects: {
-    plural: 'Projects',
-    singular: 'Project',
+  categories: {
+    plural: '分类',
+    singular: '分类',
+  },
+  media: {
+    plural: '媒体',
+    singular: '媒体',
   },
 }
 
-const Title: React.FC = () => <span>Dashboard</span>
+const Title: React.FC = () => <span>MCP Blog Studio</span>
 
 export const AdminBar: React.FC<{
   adminBarProps?: PayloadAdminBarProps

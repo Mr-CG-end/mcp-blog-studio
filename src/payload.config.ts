@@ -25,12 +25,36 @@ export default buildConfig({
   upload: { limits: { fileSize: 5 * 1024 * 1024 } },
   i18n: { fallbackLanguage: 'zh', supportedLanguages: { zh } },
   admin: {
+    meta: {
+      titleSuffix: ' - MCP Blog Studio',
+      icons: [
+        {
+          rel: 'icon',
+          type: 'image/svg+xml',
+          url: '/favicon.svg',
+        },
+        {
+          rel: 'icon',
+          type: 'image/x-icon',
+          url: '/favicon.ico',
+        },
+      ],
+      openGraph: {
+        title: 'MCP Blog Studio 管理后台',
+        description: '面向人机协同时代构建的现代中文博客工作台',
+        images: [
+          {
+            url: '/blog-og.webp',
+          },
+        ],
+      },
+    },
     components: {
-      // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
+      graphics: {
+        Logo: '@/components/Logo/Logo#Logo',
+        Icon: '@/components/Logo/Icon#Icon',
+      },
       beforeLogin: ['@/components/BeforeLogin'],
-      // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/BeforeDashboard'],
     },
     importMap: {
