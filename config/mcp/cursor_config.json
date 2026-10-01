@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "blog-studio": {
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer dev-mcp-token"
+      }
+    }
+  }
+}

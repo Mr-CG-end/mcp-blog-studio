@@ -21,6 +21,7 @@
 | 文档 | 核心受众 | 核心内容与范围 |
 | :--- | :--- | :--- |
 | **[v1 MCP 工具协议契约 (mcp-tools.md)](mcp-tools.md)** | AI Agent 工程师 | 12 个 Streamable HTTP 工具契约、输入输出 DTO 定义、Revision 乐观锁防撞规范 |
+| **[B 模块交付验收材料 (module-b-acceptance.md)](module-b-acceptance.md)** | 开发者、测试、协作团队 | M01 路由与鉴权、M05 读业务 Payload 接入、M07 Markdown 防破坏转换、客户端配置及交接边界 |
 
 ---
 

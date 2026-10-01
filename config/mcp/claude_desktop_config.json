@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "blog-studio": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sse",
+        "http://localhost:3000/mcp"
+      ],
+      "env": {
+        "MCP_TOKEN": "dev-mcp-token"
+      }
+    }
+  }
+}

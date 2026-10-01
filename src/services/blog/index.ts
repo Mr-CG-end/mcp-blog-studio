@@ -1,2 +1,3 @@
 export type { BlogService, ReadBlogService, WriteBlogService } from '@/mcp/contracts'
-// A implements write.ts; B implements read.ts. No production mock or bypass of Payload access.
+export { createReadBlogService } from './read'
+export { createMarkdownConverter, markdownConverter } from './markdown'
