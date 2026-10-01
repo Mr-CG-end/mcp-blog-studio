@@ -1,0 +1,37 @@
+build
+dist / media
+node_modules
+.DS_Store
+.env
+.next
+next-env.d.ts
+.vercel
+
+# Payload default media upload directory
+public/media/
+
+public/robots.txt
+public/sitemap*.xml
+
+
+# Playwright & Tests
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+coverage/
+
+.env.*
+!.env.example
+*.tsbuildinfo
+.local/
+*.log
+.turbo/
+.idea/
+.agents/
+
+# Evidence & benchmark temporary artifacts
+docs/yohaku-evidence/
+
+# Generated corresponding-source bundle
+/public/source/

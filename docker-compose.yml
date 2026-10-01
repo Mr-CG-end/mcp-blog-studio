@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - '127.0.0.1:5433:5432'
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:?Set LOCAL_DB_PASSWORD in .env.local}
+      POSTGRES_DB: blog_studio
+    volumes:
+      - blog_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U blog -d blog_studio']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  blog_postgres:
