@@ -10,7 +10,7 @@ interface Props {
 export const Logo: React.FC<Props> = ({ className }) => {
   return (
     <div
-      className={clsx('flex items-center gap-2.5 select-none no-underline py-1', className)}
+      className={clsx('flex items-center gap-2.5 select-none no-underline', className)}
       style={{ display: 'inline-flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none' }}
     >
       <svg
