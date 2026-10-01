@@ -12,7 +12,7 @@
 | **[需求文档 (requirements.md)](requirements.md)** | 开发者、产品负责人 | 系统目标、角色权限体系（访客/作者/管理员/Agent）、v0~v2 阶段演进边界 |
 | **[总体技术设计 (technical-design.md)](technical-design.md)** | 全栈工程师 | Next.js 16 + Payload CMS 3 + PostgreSQL 架构、集合建模、事务与版本并发锁 |
 | **[版本演进路线 (roadmap.md)](roadmap.md)** | 架构师、开发者 | 各阶段里程碑规划、准入/准出准则、依赖项与交付物全景图 |
-| **[双人分工与协作方案 (work-allocation.md)](work-allocation.md)** | 开发者、协作团队 | 责任域划分、A/B 角色模块拆解、12 个工具归属与联调交接标准 |
+| **[双人分工与协作方案 (work-allocation.md)](work-allocation.md)** | 开发者、协作团队 | A/B 分工、当前骨架状态、调用架构、逐模块编写步骤与验收标准 |
 
 ---
 
