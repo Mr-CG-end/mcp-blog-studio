@@ -9,6 +9,8 @@ export type ActorContext = Readonly<{
   source: 'mcp'
 }>
 
+export type PostState = 'draft' | 'published' | 'trashed'
+
 const id = z.number().int().positive()
 const state = z.enum(['draft', 'published', 'trashed'])
 const pagination = { page: id.default(1), limit: id.max(50).default(12) }
@@ -61,6 +63,11 @@ export const outputs = {
 export type PostSummary = z.infer<typeof postSummarySchema>
 export type PostDetail = z.infer<typeof outputs.getPost>
 export type PageResult<T> = { items: T[]; page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean }
+export type CategorySummary = z.infer<(typeof outputs)['listCategories']>['items'][number]
+export type MediaSummary = z.infer<(typeof outputs)['listMedia']>['items'][number]
+export type CurrentUser = z.infer<(typeof outputs)['getIdentity']>
+export type CreatePostParams = BlogInput<'createPost'>
+export type UpdatePostParams = BlogInput<'updatePost'>
 export type BlogMethod = keyof typeof inputs
 export type BlogInput<K extends BlogMethod> = z.infer<(typeof inputs)[K]>
 export type BlogOutput<K extends BlogMethod> = z.infer<(typeof outputs)[K]>
