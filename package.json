@@ -34,6 +34,7 @@
     "@egoist/tailwindcss-icons": "^1.9.2",
     "@iconify-json/material-symbols": "^1.2.93",
     "@iconify-json/mingcute": "^1.2.8",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "@payloadcms/admin-bar": "3.90.2",
     "@payloadcms/db-postgres": "3.90.2",
     "@payloadcms/live-preview-react": "3.90.2",
