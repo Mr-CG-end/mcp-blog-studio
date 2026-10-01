@@ -4,22 +4,19 @@ import type { Metadata } from 'next'
 import profile from '@/components/yohaku/captured-profile.json'
 import React from 'react'
 
-import { AdminBar } from '@/components/AdminBar'
 import { YohakuFooter } from '@/components/yohaku/Footer'
 import { YohakuHeader } from '@/components/yohaku/Header'
 import { SearchFAB } from '@/components/shiro/ui/SearchFAB'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode } from 'next/headers'
 
 import './globals.css'
 import './yohaku.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [{ isEnabled }, site, header, footer] = await Promise.all([
-    draftMode(),
+  const [site, header, footer] = await Promise.all([
     getSite(),
     getHeader(),
     getFooter(),
@@ -64,12 +61,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className={`${profile.bodyClass} min-h-screen antialiased flex flex-col justify-between`}
       >
         <Providers>
-          <AdminBar
-            adminBarProps={{
-              preview: isEnabled,
-            }}
-          />
-
           <a
             className="skip-link sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-content"
             href="#main-content"

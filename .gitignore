@@ -33,3 +33,6 @@ docs/yohaku-evidence/
 
 # Generated corresponding-source bundle
 /public/source/
+
+# Generated output artifacts
+/output/

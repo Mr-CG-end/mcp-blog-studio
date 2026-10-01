@@ -26,18 +26,12 @@ export type SocialLinkItem = {
 
 function QuoteDisplay({ settings }: { settings?: QuoteSettings | null }) {
   const mode = settings?.mode || 'hitokoto'
-  const [quote, setQuote] = useState<string>(
-    settings?.manualQuote || '博学而笃志，切问而近思。',
-  )
-  const [author, setAuthor] = useState<string>(settings?.manualAuthor || '')
+  const isManual = mode === 'manual'
+  const [quote, setQuote] = useState<string>('')
+  const [author, setAuthor] = useState<string>('')
 
   useEffect(() => {
-    if (mode === 'disabled') return
-    if (mode === 'manual') {
-      if (settings?.manualQuote) setQuote(settings.manualQuote)
-      if (settings?.manualAuthor) setAuthor(settings.manualAuthor)
-      return
-    }
+    if (mode === 'disabled' || mode === 'manual') return
 
     const apiUrl =
       mode === 'custom_api' && settings?.customApiUrl?.trim()
@@ -79,25 +73,27 @@ function QuoteDisplay({ settings }: { settings?: QuoteSettings | null }) {
       })
 
     return () => controller.abort()
-  }, [
-    mode,
-    settings?.customApiUrl,
-    settings?.manualQuote,
-    settings?.manualAuthor,
-    settings?.quoteJsonPath,
-  ])
+  }, [mode, settings?.customApiUrl, settings?.quoteJsonPath])
 
   if (mode === 'disabled') return null
+
+  const displayQuote = isManual
+    ? settings?.manualQuote || '博学而笃志，切问而近思。'
+    : quote || settings?.manualQuote || '博学而笃志，切问而近思。'
+
+  const displayAuthor = isManual
+    ? settings?.manualAuthor || ''
+    : author || settings?.manualAuthor || ''
 
   return (
     <div
       className={
         'min-h-[1.5em] max-w-[65ch] font-serif text-label-12 italic text-neutral-5 transition-opacity duration-300'
       }
-      title={author ? `—— ${author}` : undefined}
+      title={displayAuthor ? `—— ${displayAuthor}` : undefined}
     >
       {'「'}
-      {quote}
+      {displayQuote}
       {'」'}
     </div>
   )
@@ -161,15 +157,15 @@ function renderSocialIcon(platform?: string | null, url?: string) {
 }
 
 export function CapturedHero({
-  title,
-  description,
+  title = 'Polaris',
+  description: _description,
   avatar,
   slogan,
   quoteSettings,
   stats,
   socialLinks,
 }: {
-  title: string
+  title?: string
   description?: string | null
   avatar?: string | null
   slogan?: string | null
@@ -256,16 +252,6 @@ export function CapturedHero({
           </>
         )}
       </h1>
-      {description && (
-        <div
-          className={
-            'mt-4 text-center text-caption-10 uppercase tracking-[1.2px] text-neutral-5 lg:text-label-12 lg:tracking-[1.5px] capture-rise'
-          }
-          style={{ animationDelay: '400ms' }}
-        >
-          {description}
-        </div>
-      )}
       <div className={'flex-[1.5]'}></div>
       <div className={'text-center capture-rise'} style={{ animationDelay: '600ms' }}>
         <QuoteDisplay settings={quoteSettings} />

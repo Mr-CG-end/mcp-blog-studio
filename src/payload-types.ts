@@ -225,10 +225,10 @@ export interface Post {
    */
   importSource?: {
     url?: string | null;
+    author?: string | null;
     capturedAt?: string | null;
     hash?: string | null;
     batch?: string | null;
-    author?: string | null;
     headings?:
       | {
           [k: string]: unknown;
@@ -307,10 +307,10 @@ export interface Media {
    */
   importSource?: {
     url?: string | null;
+    author?: string | null;
     capturedAt?: string | null;
     hash?: string | null;
     batch?: string | null;
-    author?: string | null;
     headings?:
       | {
           [k: string]: unknown;
@@ -477,10 +477,10 @@ export interface Category {
    */
   importSource?: {
     url?: string | null;
+    author?: string | null;
     capturedAt?: string | null;
     hash?: string | null;
     batch?: string | null;
-    author?: string | null;
     headings?:
       | {
           [k: string]: unknown;
@@ -1150,10 +1150,10 @@ export interface PostsSelect<T extends boolean = true> {
     | T
     | {
         url?: T;
+        author?: T;
         capturedAt?: T;
         hash?: T;
         batch?: T;
-        author?: T;
         headings?: T;
       };
   title?: T;
@@ -1198,10 +1198,10 @@ export interface MediaSelect<T extends boolean = true> {
     | T
     | {
         url?: T;
+        author?: T;
         capturedAt?: T;
         hash?: T;
         batch?: T;
-        author?: T;
         headings?: T;
       };
   owner?: T;
@@ -1305,10 +1305,10 @@ export interface CategoriesSelect<T extends boolean = true> {
     | T
     | {
         url?: T;
+        author?: T;
         capturedAt?: T;
         hash?: T;
         batch?: T;
-        author?: T;
         headings?: T;
       };
   title?: T;

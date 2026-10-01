@@ -18,8 +18,7 @@ export default async function Home() {
     <div className="yohaku-home">
       <div className="relative mx-auto min-w-0 max-w-[1400px] px-6 lg:px-12 xl:px-16 2xl:px-24">
         <CapturedHero
-          title={site.title}
-          description={site.description}
+          title="Polaris"
           avatar={typeof site.brandImage === 'object' ? site.brandImage?.url : undefined}
           slogan={site.heroSlogan}
           quoteSettings={site.quoteSettings}
