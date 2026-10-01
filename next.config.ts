@@ -24,9 +24,16 @@ const nextConfig: NextConfig = {
       {
         pathname: '/api/media/file/**',
       },
+      {
+        pathname: '/media/**',
+      },
     ],
     qualities: [100],
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.blob.vercel-storage.com',
+      },
       ...(process.env.BLOB_PUBLIC_HOST
         ? [{ hostname: process.env.BLOB_PUBLIC_HOST, protocol: 'https' as const }]
         : []),

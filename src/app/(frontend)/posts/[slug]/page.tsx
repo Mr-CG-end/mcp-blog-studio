@@ -13,6 +13,7 @@ import { ArticleReader } from '@/components/ArticleReader'
 import type { Post } from '@/payload-types'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { postDate, toYohakuPostItem } from '@/services/yohakuAdapter'
 import { generateMeta } from '@/utilities/generateMeta'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
@@ -62,7 +63,32 @@ export default async function Post({ params: paramsPromise }: Args) {
                   {c.name}
                 </Link>
               ))}
-              <span>{item.authors.join('、')}</span>
+              {item.authorDetails.length > 0 ? (
+                item.authorDetails.map((author) => (
+                  <span
+                    key={author.id || author.name}
+                    className="inline-flex items-center gap-1.5 text-neutral-8 dark:text-neutral-3"
+                  >
+                    {author.avatar ? (
+                      <Image
+                        alt={author.name}
+                        className="h-6 w-6 rounded-full border border-black/10 object-cover dark:border-white/15"
+                        height={24}
+                        src={author.avatar}
+                        unoptimized
+                        width={24}
+                      />
+                    ) : (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black/10 bg-neutral-2 text-[11px] font-medium text-neutral-7 dark:border-white/15 dark:bg-neutral-8 dark:text-neutral-3">
+                        {author.name.slice(0, 1)}
+                      </span>
+                    )}
+                    <span>{author.name}</span>
+                  </span>
+                ))
+              ) : item.authors.length > 0 ? (
+                <span>{item.authors.join('、')}</span>
+              ) : null}
             </div>
           </header>
           <article data-article-content className="yohaku-article-body">

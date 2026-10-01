@@ -24,7 +24,36 @@ function plainSummary(value: string) {
     .trim()
 }
 
+export type YohakuAuthorDetail = {
+  id: string
+  name: string
+  avatar?: string | null
+}
+
 export function toYohakuPostItem(post: YohakuPostSource) {
+  const populated = (post.populatedAuthors || []).filter(
+    (a): a is { id?: string | null; name: string; avatar?: string | null } =>
+      Boolean(a && typeof a === 'object' && a.name),
+  )
+
+  const authors: string[] =
+    populated.length > 0
+      ? populated.map((a) => a.name)
+      : post.importSource?.author
+        ? [post.importSource.author]
+        : []
+
+  const authorDetails: YohakuAuthorDetail[] =
+    populated.length > 0
+      ? populated.map((a) => ({
+          id: String(a.id || ''),
+          name: a.name,
+          avatar: a.avatar || null,
+        }))
+      : post.importSource?.author
+        ? [{ id: '', name: post.importSource.author, avatar: null }]
+        : []
+
   return {
     id: String(post.id ?? post.slug),
     title: post.title,
@@ -38,9 +67,8 @@ export function toYohakuPostItem(post: YohakuPostSource) {
         ? [{ id: String(category.id), name: category.title, slug: category.slug || '' }]
         : [],
     ),
-    authors: post.importSource?.author
-      ? [post.importSource.author]
-      : (post.populatedAuthors || []).flatMap((author) => (author.name ? [author.name] : [])),
+    authors,
+    authorDetails,
   }
 }
 

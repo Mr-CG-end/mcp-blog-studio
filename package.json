@@ -27,7 +27,8 @@
     "db:migrate:create": "payload migrate:create",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "prebuild": "node scripts/package-source.mjs",
-    "source:package": "node scripts/package-source.mjs"
+    "source:package": "node scripts/package-source.mjs",
+    "sync:blob": "tsx scripts/sync-media-to-blob.ts"
   },
   "dependencies": {
     "@egoist/tailwindcss-icons": "^1.9.2",
@@ -50,6 +51,7 @@
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
+    "@vercel/blob": "^2.8.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cross-env": "^7.0.3",

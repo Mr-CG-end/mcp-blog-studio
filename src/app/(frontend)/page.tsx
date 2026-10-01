@@ -19,7 +19,11 @@ export default async function Home() {
       <div className="relative mx-auto min-w-0 max-w-[1400px] px-6 lg:px-12 xl:px-16 2xl:px-24">
         <CapturedHero
           title="Polaris"
-          avatar={typeof site.brandImage === 'object' ? site.brandImage?.url : undefined}
+          avatar={
+            typeof site.brandImage === 'object' && site.brandImage?.url
+              ? site.brandImage.url
+              : '/avatar.jpg'
+          }
           slogan={site.heroSlogan}
           quoteSettings={site.quoteSettings}
           stats={stats}
@@ -62,7 +66,7 @@ export default async function Home() {
                     <Link className="block" href={post.url}>
                       {index === 0 && (
                         <div className="text-label-12 text-neutral-6">
-                          文章 · {postDate(post.created)}
+                          文章{post.authors.length ? ` · ${post.authors.join('、')}` : ''} · {postDate(post.created)}
                         </div>
                       )}
                       <h3
@@ -76,7 +80,8 @@ export default async function Home() {
                       </h3>
                       {index > 0 && (
                         <div className="mt-1 text-label-12 text-neutral-6">
-                          文章{post.categories.map((c) => ` · ${c.name}`).join('')}
+                          文章{post.authors.length ? ` · ${post.authors.join('、')}` : ''} · {postDate(post.created)}
+                          {post.categories.map((c) => ` · ${c.name}`).join('')}
                         </div>
                       )}
                     </Link>

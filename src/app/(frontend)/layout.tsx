@@ -70,9 +70,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <YohakuHeader
             title={site.title}
             avatar={
-              site.brandImage && typeof site.brandImage === 'object'
+              site.brandImage && typeof site.brandImage === 'object' && site.brandImage.url
                 ? site.brandImage.url
-                : profile.avatar
+                : profile.avatar || '/avatar.jpg'
             }
             navItems={headerNavItems}
           />

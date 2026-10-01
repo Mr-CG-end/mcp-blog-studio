@@ -12,9 +12,11 @@ const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   let url = serverUrl + '/blog-og.webp'
 
   if (image && typeof image === 'object' && 'url' in image) {
-    const ogUrl = image.sizes?.og?.url
-
-    url = new URL(ogUrl || image.url || '/blog-og.webp', serverUrl).href
+    let rawUrl = image.sizes?.og?.url || image.url || '/blog-og.webp'
+    if (rawUrl.startsWith('/api/media/file/')) {
+      rawUrl = rawUrl.replace('/api/media/file/', '/media/')
+    }
+    url = new URL(rawUrl, serverUrl).href
   }
 
   return url

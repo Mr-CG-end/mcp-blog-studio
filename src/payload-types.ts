@@ -277,6 +277,7 @@ export interface Post {
     | {
         id?: string | null;
         name?: string | null;
+        avatar?: string | null;
       }[]
     | null;
   meta?: {
@@ -418,6 +419,7 @@ export interface Media {
 export interface User {
   id: number;
   name: string;
+  avatar?: (number | null) | Media;
   role: 'admin' | 'author';
   active?: boolean | null;
   updatedAt: string;
@@ -1175,6 +1177,7 @@ export interface PostsSelect<T extends boolean = true> {
     | {
         id?: T;
         name?: T;
+        avatar?: T;
       };
   meta?:
     | T
@@ -1332,6 +1335,7 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  avatar?: T;
   role?: T;
   active?: T;
   updatedAt?: T;
