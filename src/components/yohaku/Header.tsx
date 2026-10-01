@@ -126,7 +126,7 @@ export function YohakuHeader({
           aria-label={`${title} 首页`}
           title={`${title} 首页`}
         >
-          {avatar ? <Image unoptimized alt={title} width={40} height={40} src={avatar} /> : title}
+          <Image unoptimized alt={title} width={40} height={40} src={avatar || '/avatar.jpg'} />
         </Link>
         <nav
           id="desktop-navigation"
@@ -239,7 +239,7 @@ export function YohakuHeader({
               onClick={open ? close : undefined}
               tabIndex={open ? -1 : 0}
             >
-              {avatar ? <Image unoptimized alt="" height={24} src={avatar} width={24} /> : null}
+              <Image unoptimized alt="" height={24} src={avatar || '/avatar.jpg'} width={24} />
               <span>{title}</span>
             </Link>
             <button

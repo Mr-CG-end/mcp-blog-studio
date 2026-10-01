@@ -54,6 +54,9 @@ export function YohakuPostList({
                   )}
                 </Link>
                 <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-label-12 text-neutral-6">
+                  <span>文章</span>
+                  {!!post.authors.length && <span>· {post.authors.join('、')}</span>}
+                  <span>·</span>
                   <time dateTime={post.created}>{postDate(post.created)}</time>
                   {post.categories.map((c) => (
                     <Link
@@ -64,7 +67,6 @@ export function YohakuPostList({
                       · {c.name}
                     </Link>
                   ))}
-                  {!!post.authors.length && <span>· {post.authors.join('、')}</span>}
                 </div>
               </article>
               {pinned && controls}
