@@ -167,6 +167,7 @@ export const Posts: CollectionConfig<'posts'> = {
       fields: [
         { name: 'id', type: 'text' },
         { name: 'name', type: 'text' },
+        { name: 'avatar', type: 'text' },
       ],
     },
     {
