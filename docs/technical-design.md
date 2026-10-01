@@ -154,6 +154,6 @@ v1 和 v2 各自有工具入口，复用内容权限但不共用密钥。v2 首�
 - 当前权限与事务依赖 Payload/Drizzle 的具体版本；升级后必须运行数据库和浏览器回归。
 - 业务所有权转移、历史版本恢复、分页边界和 Blob 客户端上传列入进一步回归，不因构建通过而视为上线完成。
 
-## Shiro 前台适配
+## 前台设计与模块适配
 
-详见 [前端模块与来源](frontend-adaptation.md)。新增 SiteSettings.brandImage 和 socialLinks，由迁移 20260930_105100_frontend_branding 管理。源码包由构建前脚本生成，公开页脚提供下载入口。
+前台继承极简纸面美学与留白质感。新增 SiteSettings.brandImage 和 socialLinks，由数据库迁移管理。源码包由构建前脚本自动生成，公开页脚提供下载入口。

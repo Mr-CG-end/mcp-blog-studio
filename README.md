@@ -2,7 +2,7 @@
 
 中文多人协作博客，基于 Next.js 16、Payload CMS 3 和 PostgreSQL。
 
-**版本路线：v0 普通博客 → v1 远程 MCP → v2 WebMCP。当前只实施 v0，用户验收后再做 v1。** 已完成 Shiro 方向的前端模块适配，普通博客待用户验收。详见 [前端适配](docs/frontend-adaptation.md) 与 [使用手册](docs/user-guide.md)。
+**版本路线：v0 普通博客 → v1 远程 MCP → v2 WebMCP。当前只实施 v0，用户验收后再做 v1。** 已完成前端模块适配与极简纸面美学整合。详见 [使用手册](docs/user-guide.md) 与 [总体技术设计](docs/technical-design.md)。
 
 ## 本地运行
 
@@ -64,5 +64,5 @@ pnpm start --hostname 127.0.0.1
 - [技术设计](docs/technical-design.md)
 - [双人分工与 MCP 模块归属](docs/work-allocation.md)
 - [MCP 工具契约（v1 规划）](docs/mcp-tools.md)
-- [部署与迁移](docs/deployment.md)
-- [本地验收记录](docs/acceptance.md)
+- [部署与迁移指南](docs/deployment.md)
+- [测试方案与用例规范](docs/testing.md)
