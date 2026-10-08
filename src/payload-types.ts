@@ -882,7 +882,7 @@ export interface McpKey {
   hash: string;
   owner: number | User;
   /**
-   * 设置后密钥立即失效。可在密钥编辑页清除此字段来恢复。
+   * 留空持续有效；填写未来时间将在该时间失效，填写当前或过去时间立即失效。
    */
   revokedAt?: string | null;
   updatedAt: string;
