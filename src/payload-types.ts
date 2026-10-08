@@ -74,6 +74,7 @@ export interface Config {
     users: User;
     'audit-logs': AuditLog;
     'mcp-keys': McpKey;
+    'mcp-idempotency': McpIdempotency;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -96,6 +97,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     'audit-logs': AuditLogsSelect<false> | AuditLogsSelect<true>;
     'mcp-keys': McpKeysSelect<false> | McpKeysSelect<true>;
+    'mcp-idempotency': McpIdempotencySelect<false> | McpIdempotencySelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -888,6 +890,18 @@ export interface McpKey {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-idempotency".
+ */
+export interface McpIdempotency {
+  id: number;
+  idemKey: string;
+  inputHash: string;
+  postID: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -980,6 +994,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'mcp-keys';
         value: number | McpKey;
+      } | null)
+    | ({
+        relationTo: 'mcp-idempotency';
+        value: number | McpIdempotency;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1411,6 +1429,17 @@ export interface McpKeysSelect<T extends boolean = true> {
   hash?: T;
   owner?: T;
   revokedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-idempotency_select".
+ */
+export interface McpIdempotencySelect<T extends boolean = true> {
+  idemKey?: T;
+  inputHash?: T;
+  postID?: T;
   updatedAt?: T;
   createdAt?: T;
 }
