@@ -69,6 +69,10 @@ async function handleMCPRequest(request: NextRequest): Promise<Response> {
   if (sessionId) {
     const session = sessions.get(sessionId)
     if (!session) return new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Session expired' }, id: null }), { status: 404, headers: { 'Content-Type': 'application/json' } })
+    // Revalidate on every call so an existing session cannot bypass a scheduled revocation.
+    const actor = await authenticateBearer(request, crypto.randomUUID())
+    if (!actor || actor.keyID !== session.actor.keyID || actor.userID !== session.actor.userID || actor.role !== session.actor.role)
+      return new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Unauthorized' }, id: null }), { status: 401, headers: { 'Content-Type': 'application/json' } })
     session.lastActive = Date.now()
     return await session.transport.handleRequest(request as unknown as Request)
   }
