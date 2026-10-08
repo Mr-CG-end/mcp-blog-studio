@@ -28,7 +28,8 @@
     "seed:demo": "tsx scripts/seed-demo.ts",
     "prebuild": "node scripts/package-source.mjs",
     "source:package": "node scripts/package-source.mjs",
-    "sync:blob": "tsx scripts/sync-media-to-blob.ts"
+    "sync:blob": "tsx scripts/sync-media-to-blob.ts",
+    "demo:mcp": "tsx scripts/demo-mcp-tools.ts"
   },
   "dependencies": {
     "@egoist/tailwindcss-icons": "^1.9.2",
