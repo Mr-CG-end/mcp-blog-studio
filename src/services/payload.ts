@@ -127,11 +127,11 @@ async function convertPostMarkdown(markdown: string, user: User): Promise<Post['
   )
 }
 
-// ── 幂等存储（进程内，重启重置；后续改为数据库持久化） ──
-
-const idempotencyStore = new Map<string, { inputHash: string; postID: number }>()
-
-/** 对 createPost 的输入做简单哈希，用于比较输入是否相同 */
+/** 从标题生成 slug */
+function generateSlug(title: string, requestId: string): string {
+  const base = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
+  return base || `post-${requestId.replace(/[^a-z0-9]/g, '').slice(0, 8)}`
+}
 function hashInput(params: CreatePostParams): string {
   const str = `${params.title}|${params.markdown}|${params.summary ?? ''}|${JSON.stringify(params.categoryIDs)}|${params.heroImageID ?? ''}`
   let h = 0
@@ -353,8 +353,8 @@ export async function createPayloadService(): Promise<BlogService> {
       }
 
       const user = await fetchUser(actor)
-      const slug = params.slug || `mcp-${params.requestId.slice(0, 8)}`
       const content = await convertPostMarkdown(params.markdown, user)
+      const slug = params.slug || generateSlug(params.title, params.requestId)
       const doc = await pl.create({
         collection: 'posts',
         user,
