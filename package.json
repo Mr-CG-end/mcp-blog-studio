@@ -28,13 +28,14 @@
     "seed:demo": "tsx scripts/seed-demo.ts",
     "prebuild": "node scripts/package-source.mjs",
     "source:package": "node scripts/package-source.mjs",
-    "sync:blob": "tsx scripts/sync-media-to-blob.ts"
+    "sync:blob": "tsx scripts/sync-media-to-blob.ts",
+    "demo:mcp": "tsx scripts/demo-mcp-tools.ts"
   },
   "dependencies": {
     "@egoist/tailwindcss-icons": "^1.9.2",
     "@iconify-json/material-symbols": "^1.2.93",
     "@iconify-json/mingcute": "^1.2.8",
-    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@modelcontextprotocol/sdk": "1.31.0",
     "@payloadcms/admin-bar": "3.90.2",
     "@payloadcms/db-postgres": "3.90.2",
     "@payloadcms/live-preview-react": "3.90.2",
@@ -73,7 +74,8 @@
     "react-hook-form": "7.71.1",
     "sharp": "0.35.4",
     "tailwind-merge": "^3.4.0",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

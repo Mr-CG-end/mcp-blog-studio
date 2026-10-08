@@ -1,6 +1,6 @@
 # v1 MCP 工具契约
 
-状态：**设计冻结候选，待 v0 验收后实施**。本文是双人开发交接基线，不表示 `/mcp` 已可调用。v2 页面工具见文末。
+状态：**设计冻结候选，已有契约和注册骨架，业务及 HTTP 接入待实施**。本文是双人开发交接基线，不表示 `/mcp` 已可调用。v2 页面工具见文末。
 
 ## 1. 通用约定
 
@@ -126,10 +126,18 @@ SDK 的工具返回在业务失败时设置 `isError: true`；示例对象放入
 转换器对外接口：
 
 ```ts
-fromMarkdown(markdown, resolvedMedia): RichText
-inspectRichText(content): { contentReplaceable: boolean; warnings: string[] }
-toMarkdown(content, resolvedMedia): { markdown: string; warnings: string[] }
+interface MarkdownConverter {
+  inspect(content: unknown): Promise<{ contentReplaceable: boolean; warnings: string[] }>
+  toMarkdown(content: unknown): Promise<{
+    markdown: string; contentReplaceable: boolean; warnings: string[]
+  }>
+  fromMarkdown(markdown: string): Promise<{ content: unknown }>
+}
 ```
+
+以上与当前接口骨架一致；媒体解析器通过待实现的工厂/闭包注入，不从 Markdown 抓取任意远程 URL。工具注册签名为 `registerReadTools(server, services, actor)` 和 `registerWriteTools(server, services, actor)`。模块实现步骤、事务边界及骨架缺口见 [双人分工第 8–10 节](work-allocation.md#8-先了解当前进度与架构)。
+
+成功封装为 `{ ok: true, data, requestId }`，其中 data 满足对应工具的输出 DTO。响应 requestId 来自服务端 ActorContext.requestID，用于本次请求追踪；create_post 输入 requestId 是客户端幂等键，两者用途不同。
 
 B 提供普通段落、代码、图片、未知区块四类固定样本。A 先用桩转换器完成写入状态与权限测试；B 先用模拟服务完成协议测试，之后替换真实服务。
 

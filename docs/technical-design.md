@@ -91,7 +91,7 @@ v0 审计记录成功写入；v1 增加工具请求及失败记录。失败日�
   → collection access + hooks + PostgreSQL
 ```
 
-拟新增 `src/mcp`（协议、工具注册与错误映射）、`src/services/blog`（服务与格式转换）、个人密钥集合及后台管理入口。只新增独立路由，不修改 Payload 生成路由来塞入 MCP 逻辑。
+当前工作区已有 `src/mcp` 的契约/注册骨架及 `src/services/blog` 的接口骨架，业务、HTTP 接入、个人密钥集合及后台管理入口尚待实现；不代表远程 MCP 已可用。逐模块实现指南见 [双人分工第 8–10 节](work-allocation.md#8-先了解当前进度与架构)。只新增独立路由，不修改 Payload 生成路由来塞入 MCP 逻辑。
 
 ### 服务契约
 

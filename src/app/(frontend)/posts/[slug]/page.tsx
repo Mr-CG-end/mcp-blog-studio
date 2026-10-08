@@ -103,7 +103,7 @@ export default async function Post({ params: paramsPromise }: Args) {
               }
             />
           </article>
-          {post.showSourceCredit !== false && post.importSource?.url && (
+          {Boolean(post.showSourceCredit) && post.importSource?.url && (
             <p className="yohaku-source-credit">
               {post.importSource.author ? `原文作者：${post.importSource.author} · ` : ''}
               <a href={post.importSource.url} target="_blank" rel="noreferrer">

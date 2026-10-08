@@ -145,7 +145,7 @@ export const Posts: CollectionConfig<'posts'> = {
     {
       name: 'showSourceCredit',
       type: 'checkbox',
-      defaultValue: true,
+      defaultValue: false,
       admin: {
         position: 'sidebar',
         description: '是否在文章底部展示原文作者与来源链接',

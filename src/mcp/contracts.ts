@@ -1,236 +1,76 @@
-/**
- * MCP Blog Studio — v1 核心契约与类型定义
- *
- * 本文是双人开发交接基线，由 A 侧统一维护。
- * 双方共同确认后修改，变更需另一方 review。
- */
+import { z } from 'zod'
 
-// ─── 认证上下文 ───────────────────────────────────────────
-
-/** 服务端生成的认证上下文，客户端不允许传 owner/role/where 等字段 */
-export interface ActorContext {
+/** Created only by server-side authentication, never from tool arguments. */
+export type ActorContext = Readonly<{
   userID: number
   role: 'admin' | 'author'
   keyID: number
   requestID: string
   source: 'mcp'
-}
-
-// ─── 文章状态 ───────────────────────────────────────────
+}>
 
 export type PostState = 'draft' | 'published' | 'trashed'
 
-// ─── DTO ───────────────────────────────────────────
-
-/** 文章摘要（列表返回） */
-export interface PostSummary {
-  id: number
-  slug: string
-  title: string
-  summary: string | null
-  state: PostState
-  revision: number
-  categoryIDs: number[]
-  heroImageID: number | null
-  updatedAt: string // ISO 8601
-  publishedAt: string | null // ISO 8601
-  publicURL: string | null
+const id = z.number().int().positive()
+const state = z.enum(['draft', 'published', 'trashed'])
+const pagination = { page: id.default(1), limit: id.max(50).default(12) }
+const fields = {
+  title: z.string().min(1).max(200),
+  summary: z.string().max(500),
+  markdown: z.string().min(1).max(100000),
+  categoryIDs: z.array(id),
+  heroImageID: id.nullable(),
 }
-
-/** 文章详情（含正文） */
-export interface PostDetail extends PostSummary {
-  markdown: string
-  contentReplaceable: boolean
-  warnings: string[]
+export const revisionInput = z.object({ id, expectedRevision: id }).strict()
+export const inputs = {
+  getIdentity: z.object({}).strict(),
+  listPosts: z.object({ ...pagination, state: state.optional(), categoryID: id.optional() }).strict(),
+  getPost: z.object({ id: id.optional(), slug: z.string().min(1).max(120).optional() }).strict()
+    .refine((value) => (value.id === undefined) !== (value.slug === undefined), 'Exactly one of id or slug is required'),
+  searchPosts: z.object({ ...pagination, query: z.string().min(1).max(200), state: state.optional(), categoryID: id.optional() }).strict(),
+  listCategories: z.object(pagination).strict(),
+  listMedia: z.object({ ...pagination, query: z.string().min(1).max(200).optional() }).strict(),
+  createPost: z.object({ requestId: z.string().uuid(), title: fields.title, markdown: fields.markdown,
+    summary: fields.summary.optional(), categoryIDs: fields.categoryIDs.optional(),
+    heroImageID: fields.heroImageID.optional(), slug: z.string().min(1).max(120).optional() }).strict(),
+  updatePost: revisionInput.extend({ title: fields.title.optional(), summary: fields.summary.optional(),
+    markdown: fields.markdown.optional(), categoryIDs: fields.categoryIDs.optional(), heroImageID: fields.heroImageID.optional() })
+    .refine((value) => Object.keys(fields).some((key) => value[key as keyof typeof value] !== undefined), 'At least one changed field is required'),
+  publishPost: revisionInput,
+  unpublishPost: revisionInput,
+  trashPost: revisionInput,
+  restorePost: revisionInput,
 }
-
-/** 通用分页结果 */
-export interface PageResult<T> {
-  items: T[]
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasNextPage: boolean
+export const postSummarySchema = z.object({
+  id, slug: z.string(), title: z.string(), summary: z.string().nullable(), state, revision: id,
+  categoryIDs: z.array(id), heroImageID: id.nullable(), updatedAt: z.string().datetime(),
+  publishedAt: z.string().datetime().nullable(), publicURL: z.string().url().nullable(),
+}).strict()
+const pageOf = <T extends z.ZodTypeAny>(item: T) => z.object({
+  items: z.array(item), page: id, limit: id.max(50), total: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(), hasNextPage: z.boolean(),
+}).strict()
+export const outputs = {
+  getIdentity: z.object({ id, name: z.string(), role: z.enum(['admin', 'author']), capabilities: z.array(z.string()) }).strict(),
+  listPosts: pageOf(postSummarySchema),
+  getPost: postSummarySchema.extend({ markdown: z.string(), contentReplaceable: z.boolean(), warnings: z.array(z.string()) }),
+  searchPosts: pageOf(postSummarySchema),
+  listCategories: pageOf(z.object({ id, title: z.string(), slug: z.string() }).strict()),
+  listMedia: pageOf(z.object({ id, alt: z.string().nullable(), url: z.string(), mimeType: z.string().nullable(), width: z.number().nullable(), height: z.number().nullable() }).strict()),
+  createPost: postSummarySchema, updatePost: postSummarySchema, publishPost: postSummarySchema,
+  unpublishPost: postSummarySchema, trashPost: postSummarySchema, restorePost: postSummarySchema,
 }
-
-/** 分类信息 */
-export interface CategorySummary {
-  id: number
-  title: string
-  slug: string
-}
-
-/** 媒体信息 */
-export interface MediaSummary {
-  id: number
-  alt: string
-  url: string
-  mimeType: string
-  width: number
-  height: number
-}
-
-/** 当前用户信息 */
-export interface CurrentUser {
-  id: number
-  name: string
-  role: 'admin' | 'author'
-  capabilities: string[]
-}
-
-// ─── 错误码 ───────────────────────────────────────────
-
-export type BlogErrorCode =
-  | 'UNAUTHENTICATED'
-  | 'FORBIDDEN'
-  | 'NOT_FOUND'
-  | 'VALIDATION_ERROR'
-  | 'INVALID_REFERENCE'
-  | 'VERSION_CONFLICT'
-  | 'REQUEST_CONFLICT'
-  | 'INVALID_STATE'
-  | 'UNSUPPORTED_CONTENT'
-  | 'INTERNAL_ERROR'
-
-export interface BlogError {
-  code: BlogErrorCode
-  message: string
-  requestId?: string
-}
-
-// ─── 工具参数 ───────────────────────────────────────────
-
-/** 通用分页参数 */
-export interface PaginationParams {
-  page?: number
-  limit?: number
-}
-
-/** list_posts */
-export interface ListPostsParams extends PaginationParams {
-  state?: PostState
-  categoryID?: number
-}
-
-/** get_post — id 和 slug 必须且只能提供一个 */
-export interface GetPostParams {
-  id?: number
-  slug?: string
-}
-
-/** search_posts */
-export interface SearchPostsParams extends PaginationParams {
-  query: string
-  state?: PostState
-  categoryID?: number
-}
-
-/** list_categories */
-export interface ListCategoriesParams extends PaginationParams {}
-
-/** list_media */
-export interface ListMediaParams extends PaginationParams {
-  query?: string
-}
-
-/** create_post */
-export interface CreatePostParams {
-  requestId: string // UUID
-  title: string // 1–200 字符
-  markdown: string // 1–100000 字符
-  summary?: string // 最多 500 字符
-  categoryIDs?: number[]
-  heroImageID?: number | null
-  slug?: string // 最多 120 字符
-}
-
-/** update_post — 至少提供一个修改字段 */
-export interface UpdatePostParams {
-  id: number
-  expectedRevision: number
-  title?: string
-  summary?: string | null
-  markdown?: string
-  categoryIDs?: number[]
-  heroImageID?: number | null
-}
-
-/** publish_post */
-export interface PublishPostParams {
-  id: number
-  expectedRevision: number
-}
-
-/** unpublish_post */
-export interface UnpublishPostParams {
-  id: number
-  expectedRevision: number
-}
-
-/** trash_post */
-export interface TrashPostParams {
-  id: number
-  expectedRevision: number
-}
-
-/** restore_post */
-export interface RestorePostParams {
-  id: number
-  expectedRevision: number
-}
-
-// ─── 工具结果 ───────────────────────────────────────────
-
-/** MCP 工具调用的业务结果 */
-export interface ToolResult<T = unknown> {
-  ok: boolean
-  data?: T
-  error?: BlogError
-  requestId: string
-}
-
-// ─── Markdown 转换器接口 ─────────────────────────────
-
-/** 已解析的媒体引用，供转换器将 markdown 图片标记映射到数据库媒体 */
-export interface ResolvedMedia {
-  url: string
-  id: number
-  alt: string
-}
-
-export interface MarkdownConverter {
-  /** Markdown → Payload RichText */
-  fromMarkdown(markdown: string, resolvedMedia: ResolvedMedia[]): unknown
-
-  /** 检查 RichText 是否可无损替换 */
-  inspectRichText(content: unknown): { contentReplaceable: boolean; warnings: string[] }
-
-  /** Payload RichText → Markdown */
-  toMarkdown(content: unknown, resolvedMedia: ResolvedMedia[]): { markdown: string; warnings: string[] }
-}
-
-// ─── 服务接口 ───────────────────────────────────────────
-
-/** BlogService — 业务层接口，工具层仅负责参数映射 */
-export interface BlogService {
-  // 身份
-  getIdentity(ctx: ActorContext): Promise<CurrentUser>
-
-  // 读
-  listPosts(ctx: ActorContext, params: ListPostsParams): Promise<PageResult<PostSummary>>
-  getPost(ctx: ActorContext, params: GetPostParams): Promise<PostDetail>
-  searchPosts(ctx: ActorContext, params: SearchPostsParams): Promise<PageResult<PostSummary>>
-
-  // 分类/媒体
-  listCategories(ctx: ActorContext, params: ListCategoriesParams): Promise<PageResult<CategorySummary>>
-  listMedia(ctx: ActorContext, params: ListMediaParams): Promise<PageResult<MediaSummary>>
-
-  // 写
-  createPost(ctx: ActorContext, params: CreatePostParams): Promise<PostSummary>
-  updatePost(ctx: ActorContext, params: UpdatePostParams): Promise<PostSummary>
-  publishPost(ctx: ActorContext, params: PublishPostParams): Promise<PostSummary>
-  unpublishPost(ctx: ActorContext, params: UnpublishPostParams): Promise<PostSummary>
-  trashPost(ctx: ActorContext, params: TrashPostParams): Promise<PostSummary>
-  restorePost(ctx: ActorContext, params: RestorePostParams): Promise<PostSummary>
-}
+export type PostSummary = z.infer<typeof postSummarySchema>
+export type PostDetail = z.infer<typeof outputs.getPost>
+export type PageResult<T> = { items: T[]; page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean }
+export type CategorySummary = z.infer<(typeof outputs)['listCategories']>['items'][number]
+export type MediaSummary = z.infer<(typeof outputs)['listMedia']>['items'][number]
+export type CurrentUser = z.infer<(typeof outputs)['getIdentity']>
+export type CreatePostParams = BlogInput<'createPost'>
+export type UpdatePostParams = BlogInput<'updatePost'>
+export type BlogMethod = keyof typeof inputs
+export type BlogInput<K extends BlogMethod> = z.infer<(typeof inputs)[K]>
+export type BlogOutput<K extends BlogMethod> = z.infer<(typeof outputs)[K]>
+export type BlogService = { [K in BlogMethod]: (actor: ActorContext, input: BlogInput<K>) => Promise<BlogOutput<K>> }
+export type ReadBlogService = Pick<BlogService, 'getIdentity' | 'listPosts' | 'getPost' | 'searchPosts' | 'listCategories' | 'listMedia'>
+export type WriteBlogService = Omit<BlogService, keyof ReadBlogService>
