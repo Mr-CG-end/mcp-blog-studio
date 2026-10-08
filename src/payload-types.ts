@@ -73,6 +73,8 @@ export interface Config {
     categories: Category;
     users: User;
     'audit-logs': AuditLog;
+    'mcp-keys': McpKey;
+    'mcp-idempotency': McpIdempotency;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -94,6 +96,8 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'audit-logs': AuditLogsSelect<false> | AuditLogsSelect<true>;
+    'mcp-keys': McpKeysSelect<false> | McpKeysSelect<true>;
+    'mcp-idempotency': McpIdempotencySelect<false> | McpIdempotencySelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -860,6 +864,43 @@ export interface AuditLog {
   createdAt: string;
 }
 /**
+ * 个人 API 密钥，用于 MCP 客户端认证。明文仅创建时显示一次。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-keys".
+ */
+export interface McpKey {
+  id: number;
+  /**
+   * 给你的密钥起个名字，比如"我的 Codex 密钥"
+   */
+  label: string;
+  /**
+   * 密钥前缀，用于识别
+   */
+  prefix: string;
+  hash: string;
+  owner: number | User;
+  /**
+   * 留空持续有效；填写未来时间将在该时间失效，填写当前或过去时间立即失效。
+   */
+  revokedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-idempotency".
+ */
+export interface McpIdempotency {
+  id: number;
+  idemKey: string;
+  inputHash: string;
+  postID: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
@@ -949,6 +990,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'audit-logs';
         value: number | AuditLog;
+      } | null)
+    | ({
+        relationTo: 'mcp-keys';
+        value: number | McpKey;
+      } | null)
+    | ({
+        relationTo: 'mcp-idempotency';
+        value: number | McpIdempotency;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1367,6 +1416,30 @@ export interface AuditLogsSelect<T extends boolean = true> {
   source?: T;
   result?: T;
   code?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-keys_select".
+ */
+export interface McpKeysSelect<T extends boolean = true> {
+  label?: T;
+  prefix?: T;
+  hash?: T;
+  owner?: T;
+  revokedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-idempotency_select".
+ */
+export interface McpIdempotencySelect<T extends boolean = true> {
+  idemKey?: T;
+  inputHash?: T;
+  postID?: T;
   updatedAt?: T;
   createdAt?: T;
 }

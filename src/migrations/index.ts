@@ -4,6 +4,8 @@ import * as migration_20261001_012115_yohaku_import from './20261001_012115_yoha
 import * as migration_20261001_030741_decouple_dead_data from './20261001_030741_decouple_dead_data';
 import * as migration_20261001_034348_add_site_start_date from './20261001_034348_add_site_start_date';
 import * as migration_20261001_121205_add_user_avatar from './20261001_121205_add_user_avatar';
+import * as migration_20261008_030608_add_mcp_keys from './20261008_030608_add_mcp_keys';
+import * as migration_20261008_035420_mcp_idempotency from './20261008_035420_mcp_idempotency';
 
 export const migrations = [
   {
@@ -34,6 +36,16 @@ export const migrations = [
   {
     up: migration_20261001_121205_add_user_avatar.up,
     down: migration_20261001_121205_add_user_avatar.down,
-    name: '20261001_121205_add_user_avatar'
+    name: '20261001_121205_add_user_avatar',
+  },
+  {
+    up: migration_20261008_030608_add_mcp_keys.up,
+    down: migration_20261008_030608_add_mcp_keys.down,
+    name: '20261008_030608_add_mcp_keys',
+  },
+  {
+    up: migration_20261008_035420_mcp_idempotency.up,
+    down: migration_20261008_035420_mcp_idempotency.down,
+    name: '20261008_035420_mcp_idempotency'
   },
 ];
