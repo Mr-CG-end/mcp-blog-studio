@@ -6,7 +6,7 @@
  */
 
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
-import { createMCPServer } from '@/mcp/server'
+import { createMcpServer } from '@/mcp/server'
 import { createPayloadService } from '@/services/payload'
 import { validateMCPToken } from '@/collections/MCPKeys'
 import type { ActorContext } from '@/mcp/contracts'
@@ -84,7 +84,7 @@ async function handleMCPRequest(request: NextRequest): Promise<Response> {
     sessionIdGenerator: () => { createdSessionId = crypto.randomUUID(); return createdSessionId },
     enableJsonResponse: true,
   })
-  const server = createMCPServer(await servicePromise)
+  const server = createMcpServer(actor, await servicePromise)
   await server.connect(transport)
 
   const response = await transport.handleRequest(request as unknown as Request)

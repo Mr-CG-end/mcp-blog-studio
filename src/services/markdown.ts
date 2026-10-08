@@ -6,8 +6,15 @@ import {
 import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 import type { ElementTransformer, MultilineElementTransformer, TextMatchTransformer } from '@payloadcms/richtext-lexical/lexical/markdown'
 import type { RichTextField, SanitizedConfig } from 'payload'
-import type { MarkdownConverter, ResolvedMedia } from '@/mcp/contracts'
 import type { Post } from '@/payload-types'
+
+// markdown 转换器内部类型
+interface ResolvedMedia { url: string; id: number; alt: string }
+interface MarkdownConverter {
+  fromMarkdown(markdown: string, media: ResolvedMedia[]): Post['content']
+  inspectRichText(content: unknown): { contentReplaceable: boolean; warnings: string[] }
+  toMarkdown(content: unknown, media: ResolvedMedia[]): { markdown: string; warnings: string[] }
+}
 
 type Node = Record<string, unknown>
 const record = (value: unknown): Node | null =>
