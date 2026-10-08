@@ -1,4 +1,5 @@
 import { AuditLogs } from './collections/AuditLogs'
+import { MCPKeys } from './collections/MCPKeys'
 import { SiteSettings } from './globals/SiteSettings'
 import { zh } from '@payloadcms/translations/languages/zh'
 import { postgresAdapter } from '@payloadcms/db-postgres'
@@ -93,7 +94,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users, AuditLogs],
+  collections: [Pages, Posts, Media, Categories, Users, AuditLogs, MCPKeys],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, SiteSettings],
   plugins,
