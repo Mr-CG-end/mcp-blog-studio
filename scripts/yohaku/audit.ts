@@ -9,8 +9,24 @@ const { getPayload } = await import('payload')
 const { default: config } = await import('../../src/payload.config')
 const payload = await getPayload({ config })
 const manifest = JSON.parse(await readFile('.local/yohaku-zh/manifest.json', 'utf8'))
-function nodes(node: any): any[] {
-  return [node, ...(node.children || []).flatMap(nodes)]
+interface ContentNode {
+  type?: string
+  children?: unknown[]
+  fields?: { blockType?: string; media?: unknown }
+}
+function nodes(value: unknown): ContentNode[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return []
+  const node = value as ContentNode
+  return [node, ...(Array.isArray(node.children) ? node.children.flatMap(nodes) : [])]
+}
+function isStoredMedia(value: unknown): value is { id: number; filename: string } {
+  if (!value || typeof value !== 'object') return false
+  return (
+    'id' in value &&
+    typeof value.id === 'number' &&
+    'filename' in value &&
+    typeof value.filename === 'string'
+  )
 }
 try {
   const posts = await payload.find({
@@ -26,8 +42,9 @@ try {
     const document = parseHTML(source.article.html, source.url)
     const content = post ? nodes(post.content.root) : []
     const media = content
-      .filter((n) => n.type === 'block' && n.fields.blockType === 'mediaBlock')
-      .map((n) => n.fields.media)
+      .filter((n) => n.type === 'block' && n.fields?.blockType === 'mediaBlock')
+      .map((n) => n.fields?.media)
+      .filter(isStoredMedia)
     const missingFiles = []
     for (const item of media) {
       try {

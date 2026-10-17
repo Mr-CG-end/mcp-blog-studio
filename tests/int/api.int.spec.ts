@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import type { Payload } from 'payload'
 import type { Post, User } from '@/payload-types'
 import sharp from 'sharp'
+import { cleanupRecords } from '../helpers/cleanup'
 
 dotenv.config({ path: '.env.local', override: true })
 const dbURL = new URL(process.env.DATABASE_URL || 'http://invalid')
@@ -93,11 +94,7 @@ afterAll(async () => {
       .catch(() => {})
   for (const id of media)
     await payload.delete({ collection: 'media', id, overrideAccess: true, context }).catch(() => {})
-  await payload.delete({
-    collection: 'audit-logs',
-    overrideAccess: true,
-    where: { actor: { in: users } },
-  })
+  await cleanupRecords(payload, 'audit-logs', { actor: { in: users } })
   for (const id of users) await payload.delete({ collection: 'users', id, overrideAccess: true })
   await payload.destroy()
 })

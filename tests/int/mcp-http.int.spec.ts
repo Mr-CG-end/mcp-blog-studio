@@ -4,6 +4,7 @@ import { once } from 'node:events'
 import { createServer } from 'node:net'
 import { randomUUID } from 'node:crypto'
 import dotenv from 'dotenv'
+import { cleanupRecords } from '../helpers/cleanup'
 import type { Payload } from 'payload'
 import type { User } from '@/payload-types'
 import type { PostSummary } from '@/mcp/contracts'
@@ -75,31 +76,38 @@ beforeAll(async () => {
     })
     keys.push(key as unknown as { id: number; key: string })
   }
-  const listener = createServer()
-  listener.listen(0, '127.0.0.1')
-  await once(listener, 'listening')
-  const port = (listener.address() as { port: number }).port
-  await new Promise<void>((resolve, reject) =>
-    listener.close((error) => (error ? reject(error) : resolve())),
-  )
-  url = `http://127.0.0.1:${port}`
-  server = spawn(
-    process.execPath,
-    ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', String(port)],
-    {
-      env: { ...process.env, NEXT_PUBLIC_SERVER_URL: url, DATABASE_PUSH: 'false' },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    },
-  )
-  server.stdout?.on('data', (chunk) => {
-    output = (output + chunk).slice(-10000)
-  })
-  server.stderr?.on('data', (chunk) => {
-    output = (output + chunk).slice(-10000)
-  })
+  if (process.env.MCP_TEST_SERVER_URL) {
+    const external = new URL(process.env.MCP_TEST_SERVER_URL)
+    if (!['127.0.0.1', 'localhost'].includes(external.hostname))
+      throw new Error('仅允许复用本地项目服务')
+    url = external.origin
+  } else {
+    const listener = createServer()
+    listener.listen(0, '127.0.0.1')
+    await once(listener, 'listening')
+    const port = (listener.address() as { port: number }).port
+    await new Promise<void>((resolve, reject) =>
+      listener.close((error) => (error ? reject(error) : resolve())),
+    )
+    url = `http://127.0.0.1:${port}`
+    server = spawn(
+      process.execPath,
+      ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', String(port)],
+      {
+        env: { ...process.env, NEXT_PUBLIC_SERVER_URL: url, DATABASE_PUSH: 'false' },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    )
+    server.stdout?.on('data', (chunk) => {
+      output = (output + chunk).slice(-10000)
+    })
+    server.stderr?.on('data', (chunk) => {
+      output = (output + chunk).slice(-10000)
+    })
+  }
   const deadline = Date.now() + 90000
   while (true) {
-    if (server.exitCode !== null) throw new Error(`Next exited: ${output}`)
+    if (server && server.exitCode !== null) throw new Error(`Next exited: ${output}`)
     try {
       const response = await fetch(`${url}/mcp`, { signal: AbortSignal.timeout(15000) })
       if ([401, 403].includes(response.status)) break
@@ -129,21 +137,9 @@ afterAll(async () => {
   for (const post of posts.docs) postIDs.add(post.id)
   for (const id of postIDs)
     await payload.delete({ collection: 'posts', id, overrideAccess: true, trash: true, context })
-  await payload.delete({
-    collection: 'mcp-idempotency',
-    overrideAccess: true,
-    where: { postID: { in: [...postIDs] } },
-  })
-  await payload.delete({
-    collection: 'mcp-keys',
-    overrideAccess: true,
-    where: { owner: { in: users.map((u) => u.id) } },
-  })
-  await payload.delete({
-    collection: 'audit-logs',
-    overrideAccess: true,
-    where: { actor: { in: users.map((u) => u.id) } },
-  })
+  await cleanupRecords(payload, 'mcp-idempotency', { postID: { in: [...postIDs] } })
+  await cleanupRecords(payload, 'mcp-keys', { owner: { in: users.map((u) => u.id) } })
+  await cleanupRecords(payload, 'audit-logs', { actor: { in: users.map((u) => u.id) } })
   for (const user of users)
     await payload.delete({ collection: 'users', id: user.id, overrideAccess: true })
   await payload.destroy()

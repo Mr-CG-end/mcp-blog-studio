@@ -617,6 +617,19 @@ export async function createPayloadService(): Promise<BlogService> {
         } catch (error) {
           await pl.db.rollbackTransaction(transactionID)
           const failure = toolFailure(error, actor.requestID)
+          if (failure.error.code === 'INTERNAL_ERROR') {
+            // Log only error types and source frames; never SQL, parameters or article content.
+            const frames =
+              error instanceof Error
+                ? error.stack?.split('\n').filter((line) => /^\s+at /.test(line))
+                : []
+            console.error('[MCP] Write failed', {
+              requestID: actor.requestID,
+              method: name,
+              type: error instanceof Error ? error.name : 'Unknown',
+              frames,
+            })
+          }
           try {
             await pl.create({
               collection: 'audit-logs',
