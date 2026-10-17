@@ -11,6 +11,19 @@ import { BlogError, toolFailure } from '@/mcp/errors'
 import type { ActorContext, BlogService } from '@/mcp/contracts'
 import type { Payload } from 'payload'
 
+// Unit tests isolate the database; persisted keys are covered by HTTP integration tests.
+vi.mock('payload', async (original) => ({
+  ...(await original<typeof import('payload')>()),
+  getPayload: vi.fn(async () => ({})),
+}))
+vi.mock('@/collections/MCPKeys', async (original) => ({
+  ...(await original<typeof import('@/collections/MCPKeys')>()),
+  validateMCPToken: vi.fn(async (_payload, token) =>
+    token === 'unit-test-key' ? { userID: 1, keyID: 1, role: 'admin' } : null,
+  ),
+}))
+vi.mock('@/services/payload', () => ({ createPayloadService: vi.fn(async () => ({})) }))
+
 describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试)', () => {
   // =========================================================================
   // 1. HTTP 401 拦截机制 (/mcp 鉴权守卫)
@@ -92,7 +105,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       expect(body.error.message).toContain('缺少有效 Bearer 认证 Token')
     })
 
-    it('携带不存在或已过期的 mcp-session-id 时返回 404', async () => {
+    it('伪造 session-id 不能绕过每请求认证', async () => {
       const request = new NextRequest('http://localhost:3000/mcp', {
         method: 'POST',
         headers: {
@@ -100,16 +113,16 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
         },
       })
       const response = await POST(request)
-      expect(response.status).toBe(404)
+      expect(response.status).toBe(401)
       const body = await response.json()
-      expect(body.error.message).toContain('Session expired or not found')
+      expect(body.error.message).toContain('Unauthorized')
     })
 
-    it('携带有效 Token (dev-mcp-token) 请求初始化时，鉴权守卫放行且不返回 401', async () => {
+    it('携带有效 Token (unit-test-key) 请求初始化时，鉴权守卫放行且不返回 401', async () => {
       const request = new NextRequest('http://localhost:3000/mcp', {
         method: 'POST',
         headers: {
-          authorization: 'Bearer dev-mcp-token',
+          authorization: 'Bearer unit-test-key',
           'content-type': 'application/json',
           accept: 'application/json, text/event-stream',
         },
@@ -205,7 +218,9 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
 
       const service = createReadBlogService(mockPayload, mockConverter)
 
-      await expect(service.getPost(authorAActor, { slug: 'confidential-post-by-b' })).rejects.toMatchObject({
+      await expect(
+        service.getPost(authorAActor, { slug: 'confidential-post-by-b' }),
+      ).rejects.toMatchObject({
         code: 'NOT_FOUND',
         message: '文章不存在',
       })
@@ -314,10 +329,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
           {
             and: [
               {
-                and: [
-                  { _status: { equals: 'draft' } },
-                  { deletedAt: { exists: false } },
-                ],
+                and: [{ _status: { equals: 'draft' } }, { deletedAt: { exists: false } }],
               },
               { owner: { equals: 10 } }, // 强制绑定当前作者 ID
             ],
@@ -362,10 +374,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       expect(capturedWhere).toEqual({
         and: [
           {
-            and: [
-              { _status: { equals: 'draft' } },
-              { deletedAt: { exists: false } },
-            ],
+            and: [{ _status: { equals: 'draft' } }, { deletedAt: { exists: false } }],
           },
           {
             or: [
@@ -401,7 +410,9 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
 
     const mockConverter = {
       inspect: vi.fn().mockResolvedValue({ contentReplaceable: true, warnings: [] }),
-      toMarkdown: vi.fn().mockResolvedValue({ markdown: '', contentReplaceable: true, warnings: [] }),
+      toMarkdown: vi
+        .fn()
+        .mockResolvedValue({ markdown: '', contentReplaceable: true, warnings: [] }),
       fromMarkdown: vi.fn().mockResolvedValue({ content: {} }),
     }
 
@@ -538,10 +549,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
             and: [
               { deletedAt: { exists: false } },
               {
-                or: [
-                  { _status: { equals: 'published' } },
-                  { owner: { equals: 10 } },
-                ],
+                or: [{ _status: { equals: 'published' } }, { owner: { equals: 10 } }],
               },
             ],
           },
@@ -553,23 +561,22 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       expect(capturedWhere).toEqual({
         and: [
           {
-            and: [
-              { deletedAt: { exists: true } },
-              { owner: { equals: 10 } },
-            ],
+            and: [{ deletedAt: { exists: true } }, { owner: { equals: 10 } }],
           },
         ],
       })
 
       // 作者 A 搜索回收站：同样强制隔离只能搜索本人的回收文章
-      await service.searchPosts(authorAActor, { page: 1, limit: 12, query: '回收', state: 'trashed' })
+      await service.searchPosts(authorAActor, {
+        page: 1,
+        limit: 12,
+        query: '回收',
+        state: 'trashed',
+      })
       expect(capturedWhere).toEqual({
         and: [
           {
-            and: [
-              { deletedAt: { exists: true } },
-              { owner: { equals: 10 } },
-            ],
+            and: [{ deletedAt: { exists: true } }, { owner: { equals: 10 } }],
           },
           {
             or: [
@@ -584,9 +591,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       // 管理员查回收站：包含 deletedAt: { exists: true }，无 owner 限制
       await service.listPosts(adminActor, { page: 1, limit: 10, state: 'trashed' })
       expect(capturedWhere).toEqual({
-        and: [
-          { deletedAt: { exists: true } },
-        ],
+        and: [{ deletedAt: { exists: true } }],
       })
     })
   })
@@ -628,24 +633,36 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       const emptyContent = emptyRes.structuredContent as Record<string, unknown>
       expect(emptyContent.ok).toBe(false)
       expect((emptyContent.error as Record<string, unknown>).code).toBe('VALIDATION_ERROR')
-      expect((emptyContent.error as Record<string, unknown>).message).toContain('Exactly one of id or slug is required')
+      expect((emptyContent.error as Record<string, unknown>).message).toContain(
+        'Exactly one of id or slug is required',
+      )
       expect(emptyContent.requestId).toBe('req-sec-trace-id')
 
       // 2. get_post: 同时提供 id 与 slug (触发互斥 refine 校验)
-      const conflictRes = await client.callTool({ name: 'get_post', arguments: { id: 1, slug: 'test' } })
+      const conflictRes = await client.callTool({
+        name: 'get_post',
+        arguments: { id: 1, slug: 'test' },
+      })
       expect(conflictRes.isError).toBe(true)
       const conflictContent = conflictRes.structuredContent as Record<string, unknown>
       expect(conflictContent.ok).toBe(false)
       expect((conflictContent.error as Record<string, unknown>).code).toBe('VALIDATION_ERROR')
-      expect((conflictContent.error as Record<string, unknown>).message).toContain('Exactly one of id or slug is required')
+      expect((conflictContent.error as Record<string, unknown>).message).toContain(
+        'Exactly one of id or slug is required',
+      )
 
       // 3. update_post: 仅提供 id 和 revision 但未提供任何待更新字段 (触发 refine: At least one changed field is required)
-      const noFieldsRes = await client.callTool({ name: 'update_post', arguments: { id: 1, expectedRevision: 1 } })
+      const noFieldsRes = await client.callTool({
+        name: 'update_post',
+        arguments: { id: 1, expectedRevision: 1 },
+      })
       expect(noFieldsRes.isError).toBe(true)
       const noFieldsContent = noFieldsRes.structuredContent as Record<string, unknown>
       expect(noFieldsContent.ok).toBe(false)
       expect((noFieldsContent.error as Record<string, unknown>).code).toBe('VALIDATION_ERROR')
-      expect((noFieldsContent.error as Record<string, unknown>).message).toContain('At least one changed field is required')
+      expect((noFieldsContent.error as Record<string, unknown>).message).toContain(
+        'At least one changed field is required',
+      )
     })
 
     it('MCP 协议传输层输入校验拦截: 畸形数值与超界输入在协议边界被拦截，绝不流入服务层', async () => {
@@ -666,7 +683,8 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       // 分页 limit 超出 50 上限
       const overLimitRes = await client.callTool({ name: 'list_posts', arguments: { limit: 100 } })
       expect(overLimitRes.isError).toBe(true)
-      const overLimitContent = (overLimitRes as { content: Array<{ type: string; text: string }> }).content
+      const overLimitContent = (overLimitRes as { content: Array<{ type: string; text: string }> })
+        .content
       expect(overLimitContent[0].text).toContain('Input validation error')
       expect(mockServiceHandler).not.toHaveBeenCalled()
     })
@@ -697,15 +715,32 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       expect(inputs.searchPosts.safeParse({ query: 'x'.repeat(201) }).success).toBe(false)
 
       // 4. createPost 边界测试
-      expect(inputs.createPost.safeParse({ requestId: 'not-a-uuid', title: 't', markdown: 'm' }).success).toBe(false)
-      expect(inputs.createPost.safeParse({ requestId: '550e8400-e29b-41d4-a716-446655440000', title: '', markdown: 'm' }).success).toBe(false)
-      expect(inputs.createPost.safeParse({ requestId: '550e8400-e29b-41d4-a716-446655440000', title: 't', markdown: '' }).success).toBe(false)
+      expect(
+        inputs.createPost.safeParse({ requestId: 'not-a-uuid', title: 't', markdown: 'm' }).success,
+      ).toBe(false)
+      expect(
+        inputs.createPost.safeParse({
+          requestId: '550e8400-e29b-41d4-a716-446655440000',
+          title: '',
+          markdown: 'm',
+        }).success,
+      ).toBe(false)
+      expect(
+        inputs.createPost.safeParse({
+          requestId: '550e8400-e29b-41d4-a716-446655440000',
+          title: 't',
+          markdown: '',
+        }).success,
+      ).toBe(false)
 
       // 5. 校验 ZodError 到 BlogError(VALIDATION_ERROR) 的标准安全转换逻辑
       const badResult = inputs.getPost.safeParse({ id: -999 })
       expect(badResult.success).toBe(false)
       if (!badResult.success) {
-        const blogError = new BlogError('VALIDATION_ERROR', badResult.error.issues.map((i) => i.message).join('; '))
+        const blogError = new BlogError(
+          'VALIDATION_ERROR',
+          badResult.error.issues.map((i) => i.message).join('; '),
+        )
         expect(blogError.code).toBe('VALIDATION_ERROR')
         expect(blogError.message).toContain('Number must be greater than 0')
 
@@ -727,8 +762,8 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
           // 模拟底层 ORM / 数据库抛出带有高危 SQL 与服务器内部路径的异常
           const sensitiveError = new Error(
             'syntax error at or near "SELECT password_hash FROM payload_users WHERE id = 1"\n' +
-            '    at executeQuery (/var/www/mcp-blog/node_modules/pg/lib/query.js:123:45)\n' +
-            '    at Client.query (/var/www/mcp-blog/src/db/postgres.ts:67:89)',
+              '    at executeQuery (/var/www/mcp-blog/node_modules/pg/lib/query.js:123:45)\n' +
+              '    at Client.query (/var/www/mcp-blog/src/db/postgres.ts:67:89)',
           )
           sensitiveError.name = 'DatabaseError'
           throw sensitiveError
@@ -759,7 +794,9 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
     })
 
     it('直接单元测试 toolFailure 错误脱敏函数', () => {
-      const dbErr = new Error('FATAL: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed')
+      const dbErr = new Error(
+        'FATAL: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed',
+      )
       const sanitized = toolFailure(dbErr, 'test-trace-id-123')
 
       expect(sanitized).toEqual({
@@ -864,11 +901,11 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
 
       const inspectResult = await inspectContent(tableContent)
       expect(inspectResult.contentReplaceable).toBe(false)
-      expect(inspectResult.warnings).toContain('文章包含表格结构，当前暂不支持无损转换为 Markdown 覆盖编辑')
+      expect(inspectResult.warnings).toContain('表格暂不支持通过 Markdown 无损覆盖')
 
       const markdownResult = await convertLexicalToMarkdown(tableContent)
       expect(markdownResult.contentReplaceable).toBe(false)
-      expect(markdownResult.warnings).toContain('文章包含表格结构，当前暂不支持无损转换为 Markdown 覆盖编辑')
+      expect(markdownResult.warnings).toContain('表格暂不支持通过 Markdown 无损覆盖')
     })
 
     it('检测到 Banner 横幅区块时，必须标记 contentReplaceable: false 并附带警告', async () => {
@@ -889,12 +926,12 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
 
       const inspectResult = await inspectContent(bannerContent)
       expect(inspectResult.contentReplaceable).toBe(false)
-      expect(inspectResult.warnings).toContain('文章包含横幅区块 (Banner)，当前暂不支持无损转换为 Markdown 覆盖编辑')
+      expect(inspectResult.warnings).toContain('区块 banner 无法通过 Markdown 无损替换')
 
       const markdownResult = await convertLexicalToMarkdown(bannerContent)
       expect(markdownResult.contentReplaceable).toBe(false)
-      expect(markdownResult.warnings).toContain('文章包含横幅区块 (Banner)，当前暂不支持无损转换为 Markdown 覆盖编辑')
-      expect(markdownResult.markdown).toContain('> [!WARNING]\n> (横幅区块)')
+      expect(markdownResult.warnings).toContain('区块 banner 无法通过 Markdown 无损替换')
+      expect(markdownResult.markdown).toBe('')
     })
 
     it('检测到未知自定义区块时，必须拦截并标记 contentReplaceable: false', async () => {
@@ -914,7 +951,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
 
       const inspectResult = await inspectContent(customBlockContent)
       expect(inspectResult.contentReplaceable).toBe(false)
-      expect(inspectResult.warnings[0]).toContain('未知自定义区块 (interactiveQuiz)')
+      expect(inspectResult.warnings[0]).toContain('区块 interactiveQuiz')
     })
 
     it('深层嵌套的复杂结构 (如列表中包含 Table 或 Banner) 同样被递归探测并拦截', async () => {
@@ -946,7 +983,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
 
       const inspectResult = await inspectContent(nestedContent)
       expect(inspectResult.contentReplaceable).toBe(false)
-      expect(inspectResult.warnings).toContain('文章包含横幅区块 (Banner)，当前暂不支持无损转换为 Markdown 覆盖编辑')
+      expect(inspectResult.warnings).toContain('区块 banner 无法通过 Markdown 无损替换')
     })
 
     it('getPost 串联验证: 当文章包含 Banner 时，返回的 PostDetail 包含 contentReplaceable=false 与警告', async () => {
@@ -999,8 +1036,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       expect(postDetail.id).toBe(501)
       expect(postDetail.contentReplaceable).toBe(false)
       expect(postDetail.warnings).toHaveLength(1)
-      expect(postDetail.warnings[0]).toContain('横幅区块 (Banner)')
-      expect(postDetail.markdown).toContain('> [!INFO]\n> (横幅区块)')
+      expect(postDetail.warnings[0]).toContain('banner')
       expect(postDetail.markdown).toContain('正文内容')
     })
 
@@ -1050,7 +1086,7 @@ describe('Security & Boundary Tests (模块 B: 安全与越权隔离专项测试
       expect(postDetail.id).toBe(502)
       expect(postDetail.contentReplaceable).toBe(false)
       expect(postDetail.warnings).toHaveLength(1)
-      expect(postDetail.warnings[0]).toContain('表格结构')
+      expect(postDetail.warnings[0]).toContain('表格')
     })
   })
 })

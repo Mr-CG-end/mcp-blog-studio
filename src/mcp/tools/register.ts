@@ -12,33 +12,56 @@ function unwrapEffects(schema: z.ZodTypeAny): z.ZodTypeAny {
 }
 
 export function registerTool<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
-  server: McpServer, actor: ActorContext, name: string, description: string,
-  input: I, output: O, readOnly: boolean, invoke: (input: z.infer<I>) => Promise<z.infer<O>>,
+  server: McpServer,
+  actor: ActorContext,
+  name: string,
+  description: string,
+  input: I,
+  output: O,
+  readOnly: boolean,
+  invoke: (input: z.infer<I>) => Promise<z.infer<O>>,
 ) {
-  server.registerTool(name, {
-    description, inputSchema: unwrapEffects(input),
-    outputSchema: z.object({ ok: z.boolean(), data: output.optional(),
-      error: z.object({ code: z.enum(errorCodes), message: z.string() }).optional(), requestId: z.string() }),
-    annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, openWorldHint: false },
-  }, (async (args: unknown) => {
-    try {
-      let parsedInput: z.infer<I>
+  server.registerTool(
+    name,
+    {
+      description,
+      inputSchema: unwrapEffects(input),
+      outputSchema: z
+        .object({
+          ok: z.boolean(),
+          data: output.optional(),
+          error: z.object({ code: z.enum(errorCodes), message: z.string() }).optional(),
+          requestId: z.string(),
+        })
+        .strict(),
+      annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, openWorldHint: false },
+    },
+    (async (args: unknown) => {
       try {
-        parsedInput = input.parse(args)
-      } catch (err) {
-        if (err instanceof z.ZodError) {
-          throw new BlogError('VALIDATION_ERROR', err.issues.map((i) => i.message).join('; '))
+        let parsedInput: z.infer<I>
+        try {
+          parsedInput = input.parse(args)
+        } catch (err) {
+          if (err instanceof z.ZodError) {
+            throw new BlogError('VALIDATION_ERROR', err.issues.map((i) => i.message).join('; '))
+          }
+          throw err
         }
-        throw err
+        // Parse again so refinements and the whitelist are enforced across SDK versions.
+        const data = output.parse(await invoke(parsedInput))
+        const result = { ok: true, data, requestId: actor.requestID }
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+          structuredContent: result,
+        }
+      } catch (error) {
+        const result = toolFailure(error, actor.requestID)
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+          structuredContent: result,
+        }
       }
-      // Parse again so refinements and the whitelist are enforced across SDK versions.
-      const data = output.parse(await invoke(parsedInput))
-      const result = { ok: true, data, requestId: actor.requestID }
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result) }], structuredContent: result }
-    } catch (error) {
-      const result = toolFailure(error, actor.requestID)
-      return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify(result) }], structuredContent: result }
-    }
-  }) as never)
+    }) as never,
+  )
 }
-

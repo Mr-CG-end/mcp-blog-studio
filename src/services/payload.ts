@@ -5,7 +5,11 @@
  */
 
 import config from '@payload-config'
-import { getPayload, type Where } from 'payload'
+import { getPayload, createLocalReq, type Where, type PayloadRequest, NotFound } from 'payload'
+import { BlogError, toolFailure } from '@/mcp/errors'
+import { lockContent } from '@/services/media'
+import { createHash } from 'node:crypto'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { Post, User } from '@/payload-types'
 import type {
   ActorContext,
@@ -38,12 +42,15 @@ function resolveState(d: {
 
 async function fetchUser(actor: ActorContext): Promise<User> {
   const p = await getPayload({ config })
-  return p.findByID({
+  const user = await p.findByID({
     collection: 'users',
     id: actor.userID,
     depth: 0,
     overrideAccess: true,
-  }) as Promise<User>
+  })
+  if (user.active === false || user.role !== actor.role)
+    throw new BlogError('FORBIDDEN', '账号已停用或角色已变更')
+  return user
 }
 
 // ── DTO 转换 ───────────────────────────────────────
@@ -60,7 +67,7 @@ function toSummary(doc: Post): PostSummary {
     heroImageID: doc.heroImage ? id(doc.heroImage as number | { id: number }) : null,
     updatedAt: doc.updatedAt,
     publishedAt: doc.publishedAt ?? null,
-    publicURL: publicURL(doc.slug, doc._status),
+    publicURL: doc.deletedAt ? null : publicURL(doc.slug, doc._status),
   }
 }
 
@@ -92,6 +99,7 @@ function buildWhere(state?: string, categoryID?: number): Where | undefined {
 
 // ── Payload 单例 ────────────────────────────────────
 
+const requests = new AsyncLocalStorage<PayloadRequest>()
 let _payload: Awaited<ReturnType<typeof getPayload>> | null = null
 async function payload(): Promise<Awaited<ReturnType<typeof getPayload>>> {
   if (!_payload) _payload = await getPayload({ config })
@@ -113,6 +121,7 @@ async function convertPostMarkdown(markdown: string, user: User): Promise<Post['
   })
   const media = await pl.find({
     collection: 'media',
+    req: requests.getStore(),
     where: { filename: { in: filenames } },
     pagination: false,
     depth: 0,
@@ -129,16 +138,26 @@ async function convertPostMarkdown(markdown: string, user: User): Promise<Post['
 
 /** 从标题生成 slug */
 function generateSlug(title: string, requestId: string): string {
-  const base = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
   return base || `post-${requestId.replace(/[^a-z0-9]/g, '').slice(0, 8)}`
 }
 function hashInput(params: CreatePostParams): string {
-  const str = `${params.title}|${params.markdown}|${params.summary ?? ''}|${JSON.stringify(params.categoryIDs)}|${params.heroImageID ?? ''}`
-  let h = 0
-  for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) - h + str.charCodeAt(i)) | 0
-  }
-  return h.toString(36)
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        title: params.title,
+        markdown: params.markdown,
+        slug: params.slug ?? null,
+        summary: params.summary ?? null,
+        categoryIDs: params.categoryIDs ?? [],
+        heroImageID: params.heroImageID ?? null,
+      }),
+    )
+    .digest('hex')
 }
 
 // ── Service ─────────────────────────────────────────
@@ -166,11 +185,13 @@ export async function createPayloadService(): Promise<BlogService> {
         await payload()
       ).find({
         collection: 'posts',
+        req: requests.getStore(),
         depth: 1,
         limit,
         page,
         sort: '-updatedAt',
         where: buildWhere(p.state, p.categoryID),
+        trash: p.state === 'trashed',
         user,
         overrideAccess: false,
       })
@@ -188,29 +209,18 @@ export async function createPayloadService(): Promise<BlogService> {
       const p = params as { id?: number; slug?: string }
       const user = await fetchUser(actor)
       const pl = await payload()
-      let doc: Post
-      if (p.id) {
-        doc = (await pl.findByID({
-          collection: 'posts',
-          id: p.id,
-          depth: 1,
-          user,
-          overrideAccess: false,
-        })) as Post
-      } else if (p.slug) {
-        const r = await pl.find({
-          collection: 'posts',
-          limit: 1,
-          where: { slug: { equals: p.slug } },
-          depth: 1,
-          user,
-          overrideAccess: false,
-        })
-        if (!r.docs.length) throw Object.assign(new Error('文章不存在'), { code: 'NOT_FOUND' })
-        doc = r.docs[0] as Post
-      } else {
-        throw Object.assign(new Error('必须提供 id 或 slug'), { code: 'VALIDATION_ERROR' })
-      }
+      const result = await pl.find({
+        collection: 'posts',
+        req: requests.getStore(),
+        limit: 1,
+        depth: 1,
+        trash: true,
+        where: p.id ? { id: { equals: p.id } } : { slug: { equals: p.slug } },
+        user,
+        overrideAccess: false,
+      })
+      const doc = result.docs[0]
+      if (!doc) throw new NotFound()
       const converter = createMarkdownConverter(pl.config)
       const converted = converter.toMarkdown(doc.content, [])
       return {
@@ -246,11 +256,13 @@ export async function createPayloadService(): Promise<BlogService> {
         await payload()
       ).find({
         collection: 'posts',
+        req: requests.getStore(),
         depth: 1,
         limit,
         page,
         sort: '-updatedAt',
         where: conds.length ? ({ and: conds } satisfies Where) : undefined,
+        trash: p.state === 'trashed',
         user,
         overrideAccess: false,
       })
@@ -266,7 +278,7 @@ export async function createPayloadService(): Promise<BlogService> {
 
     async listCategories(actor: ActorContext, _params: Record<string, unknown>) {
       const p = _params as { page?: number; limit?: number } | undefined
-      const { page, limit } = defaults(p?.page, p?.limit, 100)
+      const { page, limit } = defaults(p?.page, p?.limit, 50)
       const user = await fetchUser(actor)
       const r = await (
         await payload()
@@ -297,6 +309,10 @@ export async function createPayloadService(): Promise<BlogService> {
         await payload()
       ).find({
         collection: 'media',
+        req: requests.getStore(),
+        where: p?.query
+          ? { or: [{ alt: { like: p.query.trim() } }, { filename: { like: p.query.trim() } }] }
+          : undefined,
         depth: 0,
         limit,
         page,
@@ -324,27 +340,30 @@ export async function createPayloadService(): Promise<BlogService> {
     async createPost(actor: ActorContext, params: CreatePostParams): Promise<PostSummary> {
       const pl = await payload()
       // 幂等检查（查数据库持久化记录）
-      const idemKey = `${actor.keyID}:${params.requestId}`
+      const idemKey = `${actor.userID}:${params.requestId}`
       const idemResult = await pl.find({
         collection: 'mcp-idempotency',
+        req: requests.getStore(),
         where: { idemKey: { equals: idemKey } },
         depth: 0,
         limit: 1,
         overrideAccess: true,
       })
-      const existing = idemResult.docs[0] as { inputHash: string; postID: number } | undefined
+      const existing = idemResult.docs[0] as
+        { inputHash: string; postID: number; result?: PostSummary } | undefined
       if (existing) {
         const inputHash = hashInput(params)
         if (existing.inputHash === inputHash) {
           const user = await fetchUser(actor)
           const doc = (await pl.findByID({
             collection: 'posts',
+            req: requests.getStore(),
             id: existing.postID,
             depth: 0,
             user,
             overrideAccess: false,
           })) as Post
-          return toSummary(doc)
+          return existing.result ?? toSummary(doc)
         }
         throw Object.assign(new Error('REQUEST_CONFLICT'), {
           code: 'REQUEST_CONFLICT',
@@ -357,6 +376,7 @@ export async function createPayloadService(): Promise<BlogService> {
       const slug = params.slug || generateSlug(params.title, params.requestId)
       const doc = await pl.create({
         collection: 'posts',
+        req: requests.getStore(),
         user,
         overrideAccess: false,
         draft: true,
@@ -375,7 +395,8 @@ export async function createPayloadService(): Promise<BlogService> {
       // 记录幂等到数据库
       await pl.create({
         collection: 'mcp-idempotency',
-        data: { idemKey, inputHash: hashInput(params), postID: doc.id },
+        req: requests.getStore(),
+        data: { idemKey, inputHash: hashInput(params), postID: doc.id, result: toSummary(doc) },
         overrideAccess: true,
       })
       return toSummary(doc as Post)
@@ -386,13 +407,18 @@ export async function createPayloadService(): Promise<BlogService> {
       const pl = await payload()
       const existing = (await pl.findByID({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         depth: params.markdown !== undefined ? 1 : 0,
         user,
         overrideAccess: false,
       })) as Post
+      if (actor.role !== 'admin' && id(existing.owner) !== actor.userID)
+        throw new BlogError('FORBIDDEN', '无权修改此文章')
       if (existing.revision !== params.expectedRevision)
         throw Object.assign(new Error('VERSION_CONFLICT'), { code: 'VERSION_CONFLICT' })
+      if (existing.deletedAt) throw new BlogError('INVALID_STATE', '请先恢复文章')
       // enforcePost validates the submitted revision and increments it under its row lock.
       const data: Record<string, unknown> = { revision: params.expectedRevision }
       if (params.title !== undefined) data.title = params.title
@@ -409,7 +435,9 @@ export async function createPayloadService(): Promise<BlogService> {
       }
       const doc = await pl.update({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         data,
         user,
         overrideAccess: false,
@@ -425,22 +453,29 @@ export async function createPayloadService(): Promise<BlogService> {
       const pl = await payload()
       const existing = (await pl.findByID({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         depth: 0,
         user,
         overrideAccess: false,
       })) as Post
       if (existing.deletedAt)
         throw Object.assign(new Error('INVALID_STATE'), { code: 'INVALID_STATE' })
+      if (actor.role !== 'admin' && id(existing.owner) !== actor.userID)
+        throw new BlogError('FORBIDDEN', '无权修改此文章')
       if (existing.revision !== params.expectedRevision)
         throw Object.assign(new Error('VERSION_CONFLICT'), { code: 'VERSION_CONFLICT' })
+      if (existing._status === 'published') return toSummary(existing)
       const doc = await pl.update({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         data: {
           _status: 'published',
           publishedAt: existing.publishedAt ?? new Date().toISOString(),
-          revision: existing.revision + 1,
+          revision: params.expectedRevision,
         },
         user,
         overrideAccess: false,
@@ -456,19 +491,26 @@ export async function createPayloadService(): Promise<BlogService> {
       const pl = await payload()
       const existing = (await pl.findByID({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         depth: 0,
         user,
         overrideAccess: false,
       })) as Post
       if (existing.deletedAt)
         throw Object.assign(new Error('INVALID_STATE'), { code: 'INVALID_STATE' })
+      if (actor.role !== 'admin' && id(existing.owner) !== actor.userID)
+        throw new BlogError('FORBIDDEN', '无权修改此文章')
       if (existing.revision !== params.expectedRevision)
         throw Object.assign(new Error('VERSION_CONFLICT'), { code: 'VERSION_CONFLICT' })
+      if (existing._status === 'draft') return toSummary(existing)
       const doc = await pl.update({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
-        data: { _status: 'draft', revision: existing.revision + 1 },
+        trash: true,
+        data: { _status: 'draft', revision: params.expectedRevision },
         user,
         overrideAccess: false,
       })
@@ -483,20 +525,27 @@ export async function createPayloadService(): Promise<BlogService> {
       const pl = await payload()
       const existing = (await pl.findByID({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         depth: 0,
         user,
         overrideAccess: false,
       })) as Post
+      if (actor.role !== 'admin' && id(existing.owner) !== actor.userID)
+        throw new BlogError('FORBIDDEN', '无权修改此文章')
       if (existing.revision !== params.expectedRevision)
         throw Object.assign(new Error('VERSION_CONFLICT'), { code: 'VERSION_CONFLICT' })
+      if (existing.deletedAt) return toSummary(existing)
       const doc = await pl.update({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         data: {
           _status: 'draft',
           deletedAt: new Date().toISOString(),
-          revision: existing.revision + 1,
+          revision: params.expectedRevision,
         },
         user,
         overrideAccess: false,
@@ -512,24 +561,84 @@ export async function createPayloadService(): Promise<BlogService> {
       const pl = await payload()
       const existing = (await pl.findByID({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
+        trash: true,
         depth: 0,
         user,
         overrideAccess: false,
       })) as Post
       if (!existing.deletedAt)
         throw Object.assign(new Error('INVALID_STATE'), { code: 'INVALID_STATE' })
+      if (actor.role !== 'admin' && id(existing.owner) !== actor.userID)
+        throw new BlogError('FORBIDDEN', '无权修改此文章')
       if (existing.revision !== params.expectedRevision)
         throw Object.assign(new Error('VERSION_CONFLICT'), { code: 'VERSION_CONFLICT' })
       const doc = await pl.update({
         collection: 'posts',
+        req: requests.getStore(),
         id: params.id,
-        data: { deletedAt: null, _status: 'draft', revision: existing.revision + 1 },
+        trash: true,
+        data: { deletedAt: null, _status: 'draft', revision: params.expectedRevision },
         user,
         overrideAccess: false,
       })
       return toSummary(doc as Post)
     },
   } as unknown as BlogService
+  const writes = [
+    'createPost',
+    'updatePost',
+    'publishPost',
+    'unpublishPost',
+    'trashPost',
+    'restorePost',
+  ] as const
+  for (const name of writes) {
+    const invoke = svc[name] as (actor: ActorContext, params: never) => Promise<PostSummary>
+    Object.assign(svc, {
+      [name]: async (actor: ActorContext, params: never) => {
+        const pl = await payload()
+        const user = await fetchUser(actor)
+        const req = await createLocalReq(
+          { user, context: { source: 'mcp', requestID: actor.requestID, keyID: actor.keyID } },
+          pl,
+        )
+        const transactionID = await pl.db.beginTransaction()
+        if (transactionID == null) throw new BlogError('INTERNAL_ERROR', '事务不可用')
+        req.transactionID = transactionID
+        try {
+          const result = await requests.run(req, async () => {
+            await lockContent(req)
+            return invoke(actor, params)
+          })
+          await pl.db.commitTransaction(transactionID)
+          return result
+        } catch (error) {
+          await pl.db.rollbackTransaction(transactionID)
+          const failure = toolFailure(error, actor.requestID)
+          try {
+            await pl.create({
+              collection: 'audit-logs',
+              overrideAccess: true,
+              data: {
+                requestID: actor.requestID,
+                keyID: actor.keyID,
+                actor: actor.userID,
+                action: name,
+                target: 'mcp',
+                source: 'mcp',
+                result: 'failure',
+                code: failure.error.code,
+              },
+            })
+          } catch {
+            console.error(`[MCP] Failure audit unavailable: ${actor.requestID}`)
+          }
+          throw error
+        }
+      },
+    })
+  }
   return svc
 }

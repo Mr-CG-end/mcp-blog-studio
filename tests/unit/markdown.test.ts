@@ -1,132 +1,75 @@
 import { describe, expect, it } from 'vitest'
-import { markdownConverter } from '@/services/blog/markdown'
+import { createMarkdownConverter } from '@/services/blog/markdown'
+import { BlogError, toolFailure } from '@/mcp/errors'
 
-describe('M07: MarkdownConverter', () => {
-  it('支持普通段落与行内样式的双向往返', async () => {
-    const md = '这是**粗体**，这是*斜体*，这是~~删除线~~，这是`const a = 1`，以及[博客链接](https://example.com)。'
-    const { content } = await markdownConverter.fromMarkdown(md)
-    expect(content).toBeDefined()
+const converter = createMarkdownConverter()
 
-    const inspection = await markdownConverter.inspect(content)
-    expect(inspection.contentReplaceable).toBe(true)
-    expect(inspection.warnings).toHaveLength(0)
-
-    const result = await markdownConverter.toMarkdown(content)
-    expect(result.contentReplaceable).toBe(true)
-    expect(result.markdown).toContain('**粗体**')
-    expect(result.markdown).toContain('*斜体*')
-    expect(result.markdown).toContain('~~删除线~~')
-    expect(result.markdown).toContain('`const a = 1`')
-    expect(result.markdown).toContain('[博客链接](https://example.com)')
+describe('实际 Posts 编辑器的 Markdown 转换', () => {
+  it.each([
+    '# 标题\n\n普通 **粗体** 与 *斜体*、`inline` 和 [链接](https://example.com)',
+    '> 引用\n\n- 一\n    - 嵌套\n- 二\n\n1. 有序\n2. 列表\n\n---',
+    '````ts\nconst code = "```"\n````',
+    '',
+  ])('受支持内容通过同一编辑器转换两次后语义稳定：%s', async (markdown) => {
+    const first = await converter.fromMarkdown(markdown)
+    const exported = await converter.toMarkdown(first.content)
+    expect(exported.contentReplaceable, exported.warnings.join(';')).toBe(true)
+    const second = await converter.fromMarkdown(exported.markdown)
+    expect((await converter.toMarkdown(second.content)).markdown).toBe(exported.markdown)
   })
 
-  it('支持标题、引用、列表与分割线', async () => {
-    const md = `# 一级标题
-
-## 二级标题
-
-> 这是一个引述段落
-
-- 无序项一
-- 无序项二
-
-1. 有序项一
-2. 有序项二
-
----`
-
-    const { content } = await markdownConverter.fromMarkdown(md)
-    const result = await markdownConverter.toMarkdown(content)
-
-    expect(result.markdown).toContain('# 一级标题')
-    expect(result.markdown).toContain('## 二级标题')
-    expect(result.markdown).toContain('> 这是一个引述段落')
-    expect(result.markdown).toContain('- 无序项一')
-    expect(result.markdown).toContain('1. 有序项一')
-    expect(result.markdown).toContain('---')
+  it('媒体解析只接受注入解析器返回的既有 URL 和 alt', async () => {
+    const media = { id: 42, url: 'https://example.com/media/image.png', alt: '图片' }
+    const resolved = createMarkdownConverter({
+      resolveMedia: async (urls) => (urls.includes(media.url) ? [media] : []),
+    })
+    const parsed = await resolved.fromMarkdown(`![图片](${media.url})`)
+    expect(JSON.stringify(parsed.content)).toContain('"media":42')
+    await expect(converter.fromMarkdown(`![图片](${media.url})`)).rejects.toMatchObject({
+      code: 'INVALID_REFERENCE',
+    })
+    await expect(resolved.fromMarkdown(`![不同 alt](${media.url})`)).rejects.toMatchObject({
+      code: 'UNSUPPORTED_CONTENT',
+    })
+    // Without a populated URL, reading is allowed but full replacement is blocked.
+    expect((await resolved.toMarkdown(parsed.content)).contentReplaceable).toBe(false)
   })
 
-  it('支持代码块与语言标记无损互转', async () => {
-    const md = `\`\`\`typescript
-interface User {
-  id: number
-  name: string
-}
-\`\`\``
-
-    const { content } = await markdownConverter.fromMarkdown(md)
-    const result = await markdownConverter.toMarkdown(content)
-
-    expect(result.contentReplaceable).toBe(true)
-    expect(result.markdown).toContain('```typescript')
-    expect(result.markdown).toContain('interface User {')
-    expect(result.markdown).toContain('```')
-  })
-
-  it('支持图片媒体块识别与转换', async () => {
-    const md = '![封面配图](https://example.com/cover.webp)'
-    const { content } = await markdownConverter.fromMarkdown(md)
-    const result = await markdownConverter.toMarkdown(content)
-
-    expect(result.contentReplaceable).toBe(true)
-    expect(result.markdown).toBe('![封面配图](https://example.com/cover.webp)')
-  })
-
-  it('当文章包含 Banner 横幅区块时，标记不可整体覆盖并输出警告', async () => {
-    const contentWithBanner = {
+  it.each(['banner', 'future-block'])('未知或不可逆区块 %s 拦截替换', async (blockType) => {
+    const result = await converter.toMarkdown({
       root: {
         type: 'root',
-        children: [
-          {
-            type: 'paragraph',
-            children: [{ type: 'text', text: '前置说明' }],
-          },
-          {
-            type: 'block',
-            fields: {
-              blockType: 'banner',
-              style: 'warning',
-              content: {},
-            },
-          },
-        ],
+        version: 1,
+        children: [{ type: 'block', version: 2, fields: { blockType, content: 'secret' } }],
       },
-    }
-
-    const inspection = await markdownConverter.inspect(contentWithBanner)
-    expect(inspection.contentReplaceable).toBe(false)
-    expect(inspection.warnings.some((w) => w.includes('Banner'))).toBe(true)
-
-    const result = await markdownConverter.toMarkdown(contentWithBanner)
+    })
     expect(result.contentReplaceable).toBe(false)
     expect(result.warnings.length).toBeGreaterThan(0)
-    expect(result.markdown).toContain('前置说明')
   })
 
-  it('当文章包含表格或未知节点时，正确拦截不可替换性', async () => {
-    const contentWithTable = {
-      root: {
-        type: 'root',
-        children: [
-          {
-            type: 'table',
-            children: [],
-          },
-        ],
-      },
-    }
-
-    const inspection = await markdownConverter.inspect(contentWithTable)
-    expect(inspection.contentReplaceable).toBe(false)
-    expect(inspection.warnings.some((w) => w.includes('表格'))).toBe(true)
+  it.each([
+    '<script>alert(1)</script>',
+    '[危险](javascript:alert(1))',
+    '文字 ![图片](https://example.com/a.png)',
+  ])('不支持的输入明确拒绝：%s', async (markdown) => {
+    await expect(converter.fromMarkdown(markdown)).rejects.toMatchObject({
+      code: 'UNSUPPORTED_CONTENT',
+    })
   })
 
-  it('处理空字符串或边界输入时保持健壮', async () => {
-    const emptyResult = await markdownConverter.fromMarkdown('')
-    expect(emptyResult.content).toBeDefined()
+  it('代码块中的 HTML 保留为示例代码', async () => {
+    const { content } = await converter.fromMarkdown('```html\n<script>alert(1)</script>\n```')
+    expect((await converter.toMarkdown(content)).markdown).toContain('<script>alert(1)</script>')
+  })
 
-    const toMdResult = await markdownConverter.toMarkdown(emptyResult.content)
-    expect(toMdResult.markdown).toBe('')
-    expect(toMdResult.contentReplaceable).toBe(true)
+  it('业务错误映射但不泄露底层错误消息，输出错误归为服务端错误', () => {
+    expect(
+      toolFailure(Object.assign(new Error('sensitive SQL'), { code: 'VERSION_CONFLICT' }), 'req')
+        .error.code,
+    ).toBe('VERSION_CONFLICT')
+    expect(toolFailure(new Error('sensitive SQL'), 'req').error.message).not.toContain('SQL')
+    expect(toolFailure(new BlogError('NOT_FOUND', '文章不存在'), 'req').error.code).toBe(
+      'NOT_FOUND',
+    )
   })
 })

@@ -15,6 +15,8 @@ export const AuditLogs: CollectionConfig = {
       isAdmin(req.user) ? true : activeUser(req.user) ? { actor: { equals: req.user!.id } } : false,
   },
   fields: [
+    { name: 'requestID', type: 'text', index: true },
+    { name: 'keyID', type: 'number' },
     { name: 'actor', type: 'relationship', relationTo: 'users', required: true },
     { name: 'action', type: 'text', required: true },
     { name: 'target', type: 'text', required: true },

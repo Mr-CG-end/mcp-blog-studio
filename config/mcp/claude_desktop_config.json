@@ -4,12 +4,12 @@
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-sse",
-        "http://localhost:3000/mcp"
+        "mcp-remote",
+        "http://localhost:3000/mcp",
+        "--header",
+        "Authorization: Bearer ${MCP_TOKEN}"
       ],
-      "env": {
-        "MCP_TOKEN": "dev-mcp-token"
-      }
+      "env": { "MCP_TOKEN": "REPLACE_WITH_PERSONAL_MCP_KEY" }
     }
   }
 }

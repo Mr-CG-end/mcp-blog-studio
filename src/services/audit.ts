@@ -15,6 +15,8 @@ export async function audit(
     req,
     data: {
       actor: req.user.id,
+      requestID: typeof req.context.requestID === 'string' ? req.context.requestID : undefined,
+      keyID: typeof req.context.keyID === 'number' ? req.context.keyID : undefined,
       action,
       target,
       result,

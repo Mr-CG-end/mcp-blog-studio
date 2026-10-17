@@ -7,19 +7,20 @@ export const MCPIdempotency: CollectionConfig = {
   slug: 'mcp-idempotency',
   admin: { hidden: true }, // 不在后台显示
   access: {
-    create: () => true,
-    read: () => true,
+    create: () => false,
+    read: () => false,
     update: () => false,
     delete: () => false,
   },
   fields: [
+    { name: 'result', type: 'json' },
     {
       name: 'idemKey',
       type: 'text',
       required: true,
       unique: true,
       index: true,
-      label: '幂等键（keyID:requestId）',
+      label: '幂等键（userID:requestId）',
     },
     {
       name: 'inputHash',

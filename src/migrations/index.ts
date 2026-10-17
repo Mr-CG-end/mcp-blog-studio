@@ -1,11 +1,12 @@
-import * as migration_20260930_033124_initial_blog from './20260930_033124_initial_blog';
-import * as migration_20260930_105100_frontend_branding from './20260930_105100_frontend_branding';
-import * as migration_20261001_012115_yohaku_import from './20261001_012115_yohaku_import';
-import * as migration_20261001_030741_decouple_dead_data from './20261001_030741_decouple_dead_data';
-import * as migration_20261001_034348_add_site_start_date from './20261001_034348_add_site_start_date';
-import * as migration_20261001_121205_add_user_avatar from './20261001_121205_add_user_avatar';
-import * as migration_20261008_030608_add_mcp_keys from './20261008_030608_add_mcp_keys';
-import * as migration_20261008_035420_mcp_idempotency from './20261008_035420_mcp_idempotency';
+import * as migration_20260930_033124_initial_blog from './20260930_033124_initial_blog'
+import * as migration_20260930_105100_frontend_branding from './20260930_105100_frontend_branding'
+import * as migration_20261001_012115_yohaku_import from './20261001_012115_yohaku_import'
+import * as migration_20261001_030741_decouple_dead_data from './20261001_030741_decouple_dead_data'
+import * as migration_20261001_034348_add_site_start_date from './20261001_034348_add_site_start_date'
+import * as migration_20261001_121205_add_user_avatar from './20261001_121205_add_user_avatar'
+import * as migration_20261008_030608_add_mcp_keys from './20261008_030608_add_mcp_keys'
+import * as migration_20261008_035420_mcp_idempotency from './20261008_035420_mcp_idempotency'
+import * as migration_20261017_070000_mcp_integration from './20261017_070000_mcp_integration'
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20261008_035420_mcp_idempotency.up,
     down: migration_20261008_035420_mcp_idempotency.down,
-    name: '20261008_035420_mcp_idempotency'
+    name: '20261008_035420_mcp_idempotency',
   },
-];
+  {
+    up: migration_20261017_070000_mcp_integration.up,
+    down: migration_20261017_070000_mcp_integration.down,
+    name: '20261017_070000_mcp_integration',
+  },
+]

@@ -854,6 +854,8 @@ export interface Form {
  */
 export interface AuditLog {
   id: number;
+  requestID?: string | null;
+  keyID?: number | null;
   actor: number | User;
   action: string;
   target: string;
@@ -894,6 +896,15 @@ export interface McpKey {
  */
 export interface McpIdempotency {
   id: number;
+  result?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   idemKey: string;
   inputHash: string;
   postID: number;
@@ -1410,6 +1421,8 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "audit-logs_select".
  */
 export interface AuditLogsSelect<T extends boolean = true> {
+  requestID?: T;
+  keyID?: T;
   actor?: T;
   action?: T;
   target?: T;
@@ -1437,6 +1450,7 @@ export interface McpKeysSelect<T extends boolean = true> {
  * via the `definition` "mcp-idempotency_select".
  */
 export interface McpIdempotencySelect<T extends boolean = true> {
+  result?: T;
   idemKey?: T;
   inputHash?: T;
   postID?: T;

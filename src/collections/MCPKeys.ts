@@ -26,10 +26,10 @@ export const MCPKeys: CollectionConfig = {
     },
   },
   access: {
-    create: signedIn,          // 登录用户均可创建自己的密钥
-    read: ownContent,          // 仅看自己的，管理员看全部
-    update: () => false,       // 不能修改，只能撤销
-    delete: () => false,       // 不能删除
+    create: signedIn, // 登录用户均可创建自己的密钥
+    read: ownContent, // 仅看自己的，管理员看全部
+    update: ownContent, // 服务端钩子仅接受撤销时间
+    delete: () => false, // 不能删除
   },
   fields: [
     {
@@ -77,10 +77,20 @@ export const MCPKeys: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      // 创建时自动生成密钥（仅当自定义端点未提供时）
-      async ({ data, operation, req }) => {
-        if (operation !== 'create') return data
-        if (data.prefix) return data // 自定义端点已生成，跳过
+      // 创建时始终生成服务端密钥，忽略客户端提供的凭据字段。
+      async ({ data, operation, originalDoc, req }) => {
+        const origin = req.headers.get('origin')
+        const serverURL = process.env.NEXT_PUBLIC_SERVER_URL || req.url
+        if (origin && (!serverURL || origin !== new URL(serverURL).origin))
+          throw new Error('非法请求来源')
+        if (operation !== 'create') {
+          // A revoked key cannot be reactivated or rewritten into a different credential.
+          const expired = originalDoc.revokedAt && Date.parse(originalDoc.revokedAt) <= Date.now()
+          return {
+            ...originalDoc,
+            revokedAt: expired ? originalDoc.revokedAt : (data.revokedAt ?? originalDoc.revokedAt),
+          }
+        }
         const { rawKey, prefix, hash } = generateKey()
         data.prefix = prefix
         data.hash = hash
@@ -95,7 +105,8 @@ export const MCPKeys: CollectionConfig = {
       async ({ doc, operation, req }) => {
         if (operation === 'create') {
           console.log(`[MCP] 密钥已创建: ${doc.prefix} (owner: ${doc.owner})`)
-          const created = req.context.mcpCreatedKey as { rawKey: string; prefix: string } | undefined
+          const created = req.context.mcpCreatedKey as
+            { rawKey: string; prefix: string } | undefined
           delete req.context.mcpCreatedKey
           if (created && created.prefix === doc.prefix) {
             req.responseHeaders ??= new Headers()
@@ -114,32 +125,43 @@ export const MCPKeys: CollectionConfig = {
       handler: async (req) => {
         const payload = req.payload
         const user = req.user
-        if (!user || !activeUser(user)) return Response.json({ error: '请先登录有效账号' }, { status: 401 })
+        if (!user || !activeUser(user))
+          return Response.json({ error: '请先登录有效账号' }, { status: 401 })
 
         let body: unknown
-        try { body = await req.json?.() }
-        catch { return Response.json({ error: '请求必须是有效的 JSON' }, { status: 400 }) }
-        const label = typeof body === 'object' && body !== null && 'label' in body && typeof body.label === 'string'
-          ? body.label.trim() : ''
-        if (!label || label.length > 100) return Response.json({ error: '名称须为 1–100 字符' }, { status: 400 })
-
-        const { rawKey, prefix, hash } = generateKey()
+        try {
+          body = await req.json?.()
+        } catch {
+          return Response.json({ error: '请求必须是有效的 JSON' }, { status: 400 })
+        }
+        const label =
+          typeof body === 'object' &&
+          body !== null &&
+          'label' in body &&
+          typeof body.label === 'string'
+            ? body.label.trim()
+            : ''
+        if (!label || label.length > 100)
+          return Response.json({ error: '名称须为 1–100 字符' }, { status: 400 })
 
         const doc = await payload.create({
           collection: 'mcp-keys',
-          data: { label, prefix, hash, owner: user.id, revokedAt: null },
+          data: { label, owner: user.id, prefix: '', hash: '' },
           overrideAccess: false,
           req,
         })
 
         // 返回完整密钥（仅此一次）
-        return Response.json({
-          id: doc.id,
-          label: doc.label,
-          prefix: doc.prefix,
-          key: rawKey,
-          note: '请立即保存此密钥，它不会再显示。',
-        }, { headers: { 'Cache-Control': 'no-store' } })
+        return Response.json(
+          {
+            id: doc.id,
+            label: doc.label,
+            prefix: doc.prefix,
+            key: (doc as unknown as { key: string }).key,
+            note: '请立即保存此密钥，它不会再显示。',
+          },
+          { headers: { 'Cache-Control': 'no-store' } },
+        )
       },
     },
   ],
@@ -162,7 +184,11 @@ export async function validateMCPToken(
 
   if (result.docs.length === 0) return null
 
-  const key = result.docs[0] as unknown as { id: number; owner: number | { id: number }; revokedAt?: string | null }
+  const key = result.docs[0] as unknown as {
+    id: number
+    owner: number | { id: number }
+    revokedAt?: string | null
+  }
   // Scheduled revocation becomes effective at the stored timestamp, including equality.
   if (key.revokedAt) {
     const revokedAt = Date.parse(key.revokedAt)
@@ -172,14 +198,16 @@ export async function validateMCPToken(
   const ownerId = typeof key.owner === 'object' ? key.owner.id : key.owner
 
   // 查用户状态
-  const user = await payload.findByID({
-    collection: 'users',
-    id: ownerId,
-    depth: 0,
-    overrideAccess: true,
-  }) as unknown as { id: number; role: string; active?: boolean | null }
+  const user = (await payload
+    .findByID({
+      collection: 'users',
+      id: ownerId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    .catch(() => null)) as { id: number; role: string; active?: boolean | null } | null
 
-  if (user.active === false) return null
+  if (!user || !['admin', 'author'].includes(user.role) || user.active === false) return null
 
   return { userID: ownerId, keyID: key.id, role: user.role }
 }
