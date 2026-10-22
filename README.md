@@ -2,7 +2,7 @@
 
 中文多人协作博客，基于 Next.js 16、Payload CMS 3 和 PostgreSQL。
 
-**版本路线：v0 普通博客 → v1 远程 MCP → v2 WebMCP。当前已实现 v1 本地 MCP 联调，云部署与桌面客户端验收待完成。** 已完成前端模块适配与极简纸面美学整合。详见 [使用手册](docs/user-guide.md) 与 [总体技术设计](docs/technical-design.md)。
+**版本路线：v0 普通博客 → v1 远程 MCP → v2 WebMCP。v1 已完成本地联调及线上创建/发布实测；v2 页面工具已实现，需在支持 WebMCP 的浏览器中启用。** v2 本地验收与线上部署分开记录，见 [WebMCP 使用与验收](docs/webmcp.md)。已完成前端模块适配与极简纸面美学整合。
 
 ## 本地运行
 

@@ -52,6 +52,7 @@ export default buildConfig({
       },
     },
     components: {
+      providers: ['@/components/WebMCP#WebMCPProvider'],
       graphics: {
         Logo: '@/components/Logo/Logo#Logo',
         Icon: '@/components/Logo/Icon#Icon',

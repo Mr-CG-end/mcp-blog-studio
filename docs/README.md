@@ -1,6 +1,6 @@
 # MCP Blog Studio 文档中心
 
-> **项目版本路线**：**v0 普通博客（已就绪） → v1 远程 MCP（设计就绪） → v2 WebMCP（未来规划）**。  
+> **项目版本路线**：**v0 普通博客 → v1 远程 MCP（已实现并有线上发文验证） → v2 WebMCP（页面工具已实现，本地验收与线上部署分别记录）**。
 > 本目录收录系统的需求设计、架构设计、MCP 工具协议契约以及开发测试部署指南。
 
 ---
@@ -22,6 +22,7 @@
 | :--- | :--- | :--- |
 | **[v1 MCP 工具协议契约 (mcp-tools.md)](mcp-tools.md)** | AI Agent 工程师 | 12 个 Streamable HTTP 工具契约、输入输出 DTO 定义、Revision 乐观锁防撞规范 |
 | **[B 模块交付验收材料 (module-b-acceptance.md)](module-b-acceptance.md)** | 开发者、测试、协作团队 | M01 路由与鉴权、M05 读业务 Payload 接入、M07 Markdown 防破坏转换、客户端配置及交接边界 |
+| **[v2 WebMCP 使用与验收 (webmcp.md)](webmcp.md)** | 浏览器 Agent 使用者、开发者、测试 | 启用开关、7 个页面工具、会话权限、取消与降级、原生 Chrome 与单测验收记录 |
 
 ---
 

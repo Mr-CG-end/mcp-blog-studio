@@ -108,7 +108,8 @@ async function payload(): Promise<Awaited<ReturnType<typeof getPayload>>> {
 
 async function convertPostMarkdown(markdown: string, user: User): Promise<Post['content']> {
   const pl = await payload()
-  const converter = createMarkdownConverter(pl.config)
+  // Payload is shared across route graphs; match this graph's Lexical constructors.
+  const converter = createMarkdownConverter(await config)
   const urls = converter.mediaURLs(markdown)
   if (!urls.length) return converter.fromMarkdown(markdown, [])
   // Only resolve existing database media; never fetch a Markdown URL over the network.
@@ -221,7 +222,7 @@ export async function createPayloadService(): Promise<BlogService> {
       })
       const doc = result.docs[0]
       if (!doc) throw new NotFound()
-      const converter = createMarkdownConverter(pl.config)
+      const converter = createMarkdownConverter(await config)
       const converted = converter.toMarkdown(doc.content, [])
       return {
         ...toSummary(doc),
@@ -426,7 +427,7 @@ export async function createPayloadService(): Promise<BlogService> {
       if (params.categoryIDs !== undefined) data.categories = params.categoryIDs
       if (params.heroImageID !== undefined) data.heroImage = params.heroImageID
       if (params.markdown !== undefined) {
-        const compatibility = createMarkdownConverter(pl.config).inspectRichText(existing.content)
+        const compatibility = createMarkdownConverter(await config).inspectRichText(existing.content)
         if (!compatibility.contentReplaceable)
           throw Object.assign(new Error('正文包含无法无损转换的区块，请使用后台编辑'), {
             code: 'UNSUPPORTED_CONTENT',
