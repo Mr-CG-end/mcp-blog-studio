@@ -3,6 +3,8 @@ const port = process.env.E2E_PORT || '3000'
 const baseURL = `http://127.0.0.1:${port}`
 export default defineConfig({
   testDir: './tests/e2e',
+  // WebMCP requires an enabled build, isolated fixture and native browser flags.
+  testIgnore: ['**/webmcp.e2e.spec.ts'],
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: 'list',

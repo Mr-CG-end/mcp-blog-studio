@@ -28,6 +28,7 @@ const roots = [
   'vitest.unit.config.mts',
   'vitest.setup.ts',
   'playwright.config.ts',
+  'playwright.webmcp.config.ts',
 ]
 const assets = readdirSync('public')
   .filter((name) => !['source', 'media'].includes(name))
