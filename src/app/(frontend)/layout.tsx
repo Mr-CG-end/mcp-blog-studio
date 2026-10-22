@@ -7,6 +7,7 @@ import React from 'react'
 import { YohakuFooter } from '@/components/yohaku/Footer'
 import { YohakuHeader } from '@/components/yohaku/Header'
 import { SearchFAB } from '@/components/shiro/ui/SearchFAB'
+import { WebMCP } from '@/components/WebMCP'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className={`${profile.bodyClass} min-h-screen antialiased flex flex-col justify-between`}
       >
         <Providers>
+          <WebMCP />
           <a
             className="skip-link sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-content"
             href="#main-content"
