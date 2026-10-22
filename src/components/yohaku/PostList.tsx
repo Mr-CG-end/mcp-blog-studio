@@ -8,15 +8,17 @@ export function YohakuPostList({
   posts,
   basePath,
   query,
+  categorySlug,
   showCount = true,
 }: {
   posts: PaginatedDocs<Post>
   basePath: string
   query?: string
+  categorySlug?: string
   showCount?: boolean
 }) {
   const url = (page: number) =>
-    `${basePath}?${new URLSearchParams({ ...(query ? { q: query } : {}), page: String(page) })}`
+    `${basePath}?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(categorySlug ? { categorySlug } : {}), page: String(page) })}`
   const isPinned = (source: Post) => basePath === '/posts' && Boolean(source.pinned)
   const controls = showCount && (
     <div className="yohaku-archive-controls">
