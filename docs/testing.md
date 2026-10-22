@@ -72,6 +72,8 @@ pnpm test:e2e
 
 ## 4. v2 验收矩阵
 
+新增单测：`tests/unit/webmcp.test.ts`、`tests/unit/webmcp-server.test.ts`；原生浏览器用例：`tests/e2e/webmcp.e2e.spec.ts`，配置 `playwright.webmcp.config.ts`。执行前使用隔离本地数据库并开启构建开关，不能把生产环境作为 fixture 数据库。详细证据见 [v2 使用与验收](webmcp.md)。
+
 - 目标浏览器/版本/试验条件写入记录；真实浏览器可发现工具。
 - 不支持接口时页面照常运行，不加载失败遮挡普通功能。
 - 搜索、分类、分页写入 URL，工具结果与页面内容一致。
